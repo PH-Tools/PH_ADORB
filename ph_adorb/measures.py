@@ -7,7 +7,7 @@ from pathlib import Path
 from pydantic import BaseModel, PrivateAttr
 
 
-class CO2MeasureType(Enum):
+class CO2MeasureType(str, Enum):
     PERFORMANCE = "Performance"
     NON_PERFORMANCE = "Non-Performance"
 
@@ -45,9 +45,6 @@ class CO2MeasureCollection(BaseModel):
     def values(self) -> list[CO2ReductionMeasure]:
         return list(sorted(self._measures.values(), key=lambda x: x.year))
 
-    def items(self) -> list[tuple[str, CO2ReductionMeasure]]:
-        return list(sorted(self._measures.items(), key=lambda x: x[1].year))
-
     def __iter__(self):
         return iter(sorted(self._measures.values(), key=lambda x: x.year))
 
@@ -76,6 +73,12 @@ class CO2MeasureCollection(BaseModel):
             if measure.measure_type == CO2MeasureType.NON_PERFORMANCE:
                 new_collection.add_measure(measure)
         return new_collection
+
+
+def write_CO2_measures_to_json_file(_file_path: Path, measures: dict[str, CO2ReductionMeasure]) -> None:
+    """Write all of the CO2 Measure-Types to a JSON file."""
+    with open(_file_path, "w") as json_file:
+        json.dump([_.dict() for _ in measures.values()], json_file, indent=4)
 
 
 def load_CO2_measures_from_json_file(_file_path: Path) -> dict[str, CO2ReductionMeasure]:

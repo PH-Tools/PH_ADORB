@@ -1,4 +1,11 @@
-from ph_adorb.equipment import Equipment, EquipmentType, EquipmentCollection
+from pathlib import Path
+from ph_adorb.equipment import (
+    Equipment,
+    EquipmentType,
+    EquipmentCollection,
+    write_equipment_to_json_file,
+    load_equipment_from_json_file,
+)
 
 
 def test_basic_equipment():
@@ -101,9 +108,59 @@ def test_EquipmentCollection():
     assert equip_collection.get_equipment(equip2.name) == equip2
     assert equip_collection.get_equipment(equip3.name) == equip3
 
+    # -- Test Keys and Values, Contains
     assert equip1 in equip_collection
+    assert equip1 in equip_collection.values()
     assert equip1.name in equip_collection
+    assert equip1.name in equip_collection.keys()
+
     assert equip2 in equip_collection
+    assert equip2 in equip_collection.values()
     assert equip2.name in equip_collection
+    assert equip2.name in equip_collection.keys()
+
     assert equip3 in equip_collection
+    assert equip3 in equip_collection.values()
     assert equip3.name in equip_collection
+    assert equip3.name in equip_collection.keys()
+
+    # -- Test Iteration
+    for equip in equip_collection:
+        assert isinstance(equip, Equipment)
+
+
+def test_equipment_json_file():
+    equip1 = Equipment(
+        name="Test Mechanical",
+        equipment_type=EquipmentType.MECHANICAL,
+        cost=1000.0,
+        lifetime_years=10,
+        labor_fraction=0.2,
+    )
+    equip2 = Equipment(
+        name="Test Lights",
+        equipment_type=EquipmentType.LIGHTS,
+        cost=2000.0,
+        lifetime_years=20,
+        labor_fraction=0.3,
+    )
+    equip3 = Equipment(
+        name="Test Appliance",
+        equipment_type=EquipmentType.APPLIANCE,
+        cost=3000.0,
+        lifetime_years=30,
+        labor_fraction=0.4,
+    )
+
+    file_path = Path("test_equipment.json")
+    write_equipment_to_json_file(file_path, {_.name: _ for _ in [equip1, equip2, equip3]})
+
+    # -- Read the JSON file back in
+    equipment = load_equipment_from_json_file(file_path)
+    assert len(equipment) == 3
+    assert equipment["Test Mechanical"] == equip1
+    assert equipment["Test Lights"] == equip2
+    assert equipment["Test Appliance"] == equip3
+
+    # -- Cleanup
+    file_path.unlink()

@@ -7,7 +7,7 @@ from pathlib import Path
 from pydantic import BaseModel, PrivateAttr
 
 
-class EquipmentType(Enum):
+class EquipmentType(str, Enum):
     MECHANICAL = "Mechanical"
     HOT_WATER = "Hot Water"
     APPLIANCE = "Appliance"
@@ -59,9 +59,6 @@ class EquipmentCollection(BaseModel):
     def values(self) -> list[Equipment]:
         return list(sorted(self._equipment.values(), key=lambda x: x.name))
 
-    def items(self) -> list[tuple[str, Equipment]]:
-        return list(sorted(self._equipment.items(), key=lambda x: x[1].name))
-
     def __iter__(self):
         return iter(sorted(self._equipment.values(), key=lambda x: x.name))
 
@@ -72,6 +69,12 @@ class EquipmentCollection(BaseModel):
 
     def __len__(self) -> int:
         return len(self._equipment)
+
+
+def write_equipment_to_json_file(_file_path: Path, equipment: dict[str, Equipment]) -> None:
+    """Write all of the Equipment-Types to a JSON file."""
+    with open(_file_path, "w") as json_file:
+        json.dump([_.dict() for _ in equipment.values()], json_file, indent=4)
 
 
 def load_equipment_from_json_file(_file_path: Path) -> dict[str, Equipment]:

@@ -16,6 +16,12 @@ class NationalEmissions(BaseModel):
     kg_CO2_per_USD: float
 
 
+def write_national_emissions_to_json_file(_file_path: Path, _emissions: dict[str, NationalEmissions]) -> None:
+    """Write all of the National Emissions data to a JSON file."""
+    with open(_file_path, "w") as json_file:
+        json.dump([_.dict() for _ in _emissions.values()], json_file, indent=4)
+
+
 def load_national_emissions_from_json_file(_file_path: Path) -> dict[str, NationalEmissions]:
     """Load all of the National Emissions data from a JSON file."""
     with open(_file_path, "r") as json_file:

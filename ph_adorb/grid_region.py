@@ -28,6 +28,12 @@ class GridRegion(BaseModel):
         return pd.DataFrame(self.hourly_CO2_factors)
 
 
+def write_CO2_factors_to_json_file(_file_path: Path, _grid_region: GridRegion):
+    """Write the CO2 factors for the grid-region to a JSON file."""
+    with open(_file_path, "w") as json_file:
+        json.dump(_grid_region.dict(), json_file, indent=4)
+
+
 def load_CO2_factors_from_json_file(_file_path: Path) -> GridRegion:
     """Load the CO2 factors for the grid-region from a JSON file."""
     with open(_file_path, "r") as json_file:

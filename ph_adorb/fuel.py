@@ -4,7 +4,7 @@ from enum import Enum
 from pydantic import BaseModel
 
 
-class FuelType(Enum):
+class FuelType(str, Enum):
     ELECTRICITY = "Electricity"
     NATURAL_GAS = "Natural Gas"
 

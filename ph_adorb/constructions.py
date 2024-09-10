@@ -7,7 +7,7 @@ from pathlib import Path
 from pydantic import BaseModel, PrivateAttr
 
 
-class ConstructionType(Enum):
+class ConstructionType(str, Enum):
     EXTERIOR_DOOR = "Exterior Door"
     EXTERIOR_WINDOW = "Exterior Window"
     EXTERIOR_WALL = "Exterior Wall"
@@ -29,7 +29,7 @@ class Construction(BaseModel):
     quantity_m2: float = 0.0
 
     @property
-    def v(self) -> float:
+    def quantity_ft2(self) -> float:
         return self.quantity_m2 * 10.7639
 
     def set_quantity_ft2(self, _value: float) -> None:
@@ -80,9 +80,6 @@ class ConstructionCollection(BaseModel):
     def values(self) -> list[Construction]:
         return list(sorted(self._constructions.values(), key=lambda x: x.name))
 
-    def items(self) -> list[tuple[str, Construction]]:
-        return list(sorted(self._constructions.items(), key=lambda x: x[1].name))
-
     def __iter__(self):
         return iter(sorted(self._constructions.values(), key=lambda x: x.name))
 
@@ -101,12 +98,24 @@ class ConstructionCollection(BaseModel):
             * _construction_quantities (dict[str, float]): A dictionary of Construction
                 names, with their quantities (ft2).
         """
+
+        def _clean_name(n: str) -> str:
+            return n.upper().replace(" ", "_")
+
+        _construction_quantities_ft2 = {_clean_name(k): v for k, v in _construction_quantities_ft2.items()}
+
         old_constructions = list(self._constructions.values())
         self._constructions = {}
         for construction in old_constructions:
             new_construction = construction.duplicate()
-            new_construction.set_quantity_ft2(_construction_quantities_ft2[construction.name.upper()])
+            new_construction.set_quantity_ft2(_construction_quantities_ft2[_clean_name(construction.name)])
             self.add_construction(new_construction)
+
+
+def write_constructions_to_json_file(_file_path: Path, _constructions: dict[str, Construction]) -> None:
+    """Write all of the Construction-Types to a JSON file."""
+    with open(_file_path, "w") as json_file:
+        json.dump([_.dict() for _ in _constructions.values()], json_file, indent=4)
 
 
 def load_constructions_from_json_file(_file_path: Path) -> dict[str, Construction]:
