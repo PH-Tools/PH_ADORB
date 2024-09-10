@@ -1,0 +1,4 @@
+eppy==0.5.63
+pandas==2.2.2
+rich==13.8.0
+pydantic==1.10.18

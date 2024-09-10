@@ -1,0 +1,58 @@
+[
+    {
+        "name": "Exterior Wall",
+        "construction_type": "Exterior Wall",
+        "CO2_kg_per_m2": 18,
+        "cost_per_m2": 10,
+        "lifetime_years": 0,
+        "labor_fraction": 0.3
+    },
+    {
+        "name": "Exterior Roof",
+        "construction_type": "Exterior Roof",
+        "CO2_kg_per_m2": 18,
+        "cost_per_m2": 5,
+        "lifetime_years": 30,
+        "labor_fraction": 0.3
+    },
+    {
+        "name": "Exterior Slab UnIns",
+        "construction_type": "Exterior Floor",
+        "CO2_kg_per_m2": 113.4,
+        "cost_per_m2": 5,
+        "lifetime_years": 0,
+        "labor_fraction": 0.3
+    },
+    {
+        "name": "Interior Floor",
+        "construction_type": "Interior Floor",
+        "CO2_kg_per_m2": 14.4,
+        "cost_per_m2": 2,
+        "lifetime_years": 0,
+        "labor_fraction": 0.3
+    },
+    {
+        "name": "EXT_Door1",
+        "construction_type": "Exterior Door",
+        "CO2_kg_per_m2": 66.6,
+        "cost_per_m2": 250,
+        "lifetime_years": 30,
+        "labor_fraction": 0.3
+    },
+    {
+        "name": "Interior Wall",
+        "construction_type": "Interior Wall",
+        "CO2_kg_per_m2": 12.6,
+        "cost_per_m2": 5.0,
+        "lifetime_years": 0,
+        "labor_fraction": 0.3
+    },
+    {
+        "name": "Window_U-0.5 g=0.4",
+        "construction_type": "Exterior Window",
+        "CO2_kg_per_m2": 205.2,
+        "cost_per_m2": 99.988,
+        "lifetime_years": 30,
+        "labor_fraction": 0.5
+    }
+]
