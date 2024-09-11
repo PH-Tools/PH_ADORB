@@ -14,10 +14,11 @@ import ph_adorb.variant as variant
 from ph_adorb.variant import Variant, YearlyCost
 
 # -- Constants
-# -- TODO: Move these to the Variant? Or to an outside Config file?
-PC = 0.25
+# TODO: Make this work in local currency? Always in USD?
+CARBON_PRICE = 0.25
 
 # TODO: Support non-USA countries.
+# TODO: Move these to be variables someplace...
 USA_NUM_YEARS_TO_TRANSITION = 30
 USA_NATIONAL_TRANSITION_COST = 4_500_000_000_000.00
 NAMEPLATE_CAPACITY_INCREASE_GW = 1_600.00
@@ -42,7 +43,7 @@ def pv_operation_carbon_cost(
 ) -> float:
     """Calculate the total operational carbon cost for a given year."""
     try:
-        return ((_future_annual_CO2_electric[_year] + _annual_CO2_gas) * PC) / ((1 + _discount_rate) ** _year)
+        return ((_future_annual_CO2_electric[_year] + _annual_CO2_gas) * CARBON_PRICE) / ((1 + _discount_rate) ** _year)
     except ZeroDivisionError:
         return 0.0
 
@@ -180,7 +181,7 @@ def calculate_variant_ADORB_costs(_variant: Variant) -> pd.DataFrame:
     # -- Add Embodied Carbon Costs for all the Variant's Construction Materials
     for construction in _variant.construction_collection:
         material_cost: float = construction.cost * construction.material_fraction
-        material_carbon_cost: float = material_cost * (_variant.national_emissions.kg_CO2_per_USD * PC)
+        material_carbon_cost: float = material_cost * (_variant.national_emissions.kg_CO2_per_USD * CARBON_PRICE)
 
         if construction.lifetime_years != 0:
             for year in range(0, _variant.analysis_duration, construction.lifetime_years):
@@ -194,7 +195,7 @@ def calculate_variant_ADORB_costs(_variant: Variant) -> pd.DataFrame:
     # -- Add Embodied Carbon Cost for all the Variant's Equipment
     for equip in _variant.equipment_collection:
         material_cost: float = equip.cost * equip.material_fraction
-        material_carbon_cost: float = material_cost * (_variant.national_emissions.kg_CO2_per_USD * PC)
+        material_carbon_cost: float = material_cost * (_variant.national_emissions.kg_CO2_per_USD * CARBON_PRICE)
 
         if equip.lifetime_years != 0:
             for year in range(0, _variant.analysis_duration, equip.lifetime_years):
