@@ -16,58 +16,77 @@ from ph_adorb.variant import Variant, YearlyCost
 # -- Constants
 # -- TODO: Move these to the Variant? Or to an outside Config file?
 PC = 0.25
-K_DIRECT_ENERGY = 0.02
-K_OPERATIONAL_CARBON = 0.075
-K_DIRECT_MR = 0.02
-K_EMBODIED_CARBON = 0.0
-K_SYSTEM_TRANS = 0.02
 
 # TODO: Support non-USA countries.
-# -- Move these to the Variant?
-YTT = 30
-NTC_USA = 4_500_000_000_000.00
-NNCI_USA = 1_600.00
-NTCF_USA = NTC_USA / (NNCI_USA * 1_000_000_000.00)
+USA_NUM_YEARS_TO_TRANSITION = 30
+USA_NATIONAL_TRANSITION_COST = 4_500_000_000_000.00
+NAMEPLATE_CAPACITY_INCREASE_GW = 1_600.00
+USA_TRANSITION_COST_FACTOR = USA_NATIONAL_TRANSITION_COST / (NAMEPLATE_CAPACITY_INCREASE_GW * 1_000_000_000.00)
 
 
 # ---------------------------------------------------------------------------------------
 
 
-def pv_direct_energy_cost(_year: int, _annual_cost_electric: float, _annual_cost_gas: float) -> float:
+def pv_direct_energy_cost(
+    _year: int, _annual_cost_electric: float, _annual_cost_gas: float, _discount_rate: float = 0.02
+) -> float:
     """Calculate the total direct energy cost for a given year."""
-    return (_annual_cost_electric + _annual_cost_gas) / ((1 + K_DIRECT_ENERGY) ** _year)
+    try:
+        return (_annual_cost_electric + _annual_cost_gas) / ((1 + _discount_rate) ** _year)
+    except ZeroDivisionError:
+        return 0.0
 
 
-def pv_operation_carbon_cost(_year: int, _future_annual_CO2_electric: list[float], _annual_CO2_gas: float) -> float:
+def pv_operation_carbon_cost(
+    _year: int, _future_annual_CO2_electric: list[float], _annual_CO2_gas: float, _discount_rate: float = 0.075
+) -> float:
     """Calculate the total operational carbon cost for a given year."""
-    return ((_future_annual_CO2_electric[_year] + _annual_CO2_gas) * PC) / ((1 + K_OPERATIONAL_CARBON) ** _year)
+    try:
+        return ((_future_annual_CO2_electric[_year] + _annual_CO2_gas) * PC) / ((1 + _discount_rate) ** _year)
+    except ZeroDivisionError:
+        return 0.0
 
 
-def pv_direct_maintenance_cost(_year: int, _carbon_measure_yearly_costs: list[YearlyCost]) -> float:
+def pv_direct_maintenance_cost(
+    _year: int, _carbon_measure_yearly_costs: list[YearlyCost], _discount_rate: float = 0.02
+) -> float:
     """Calculate the total direct maintenance cost for a given year."""
-    return sum(row.cost / ((1 + K_DIRECT_MR) ** _year) for row in _carbon_measure_yearly_costs if row.year == _year)
+    try:
+        return sum(
+            row.cost / ((1 + _discount_rate) ** _year) for row in _carbon_measure_yearly_costs if row.year == _year
+        )
+    except ZeroDivisionError:
+        return 0.0
 
 
-def pv_embodied_CO2_cost(_year: int, _carbon_measure_embodied_CO2_yearly_costs: list[YearlyCost]) -> float:
+def pv_embodied_CO2_cost(
+    _year: int, _carbon_measure_embodied_CO2_yearly_costs: list[YearlyCost], _discount_rate: float = 0.00
+) -> float:
     """Calculate the total embodied CO2 cost for a given year."""
     # TODO: What is this factor for? Why do we multiply by it?
     FACTOR = 0.75
+    try:
+        return sum(
+            FACTOR * (row.cost / ((1 + _discount_rate) ** _year))
+            for row in _carbon_measure_embodied_CO2_yearly_costs
+            if row.year == _year
+        )
+    except ZeroDivisionError:
+        return 0.0
 
-    return sum(
-        FACTOR * (row.cost / ((1 + K_EMBODIED_CARBON) ** _year))
-        for row in _carbon_measure_embodied_CO2_yearly_costs
-        if row.year == _year
-    )
 
-
-def pv_grid_transition_cost(_year: int, _e_trans: float) -> float:
+def pv_grid_transition_cost(_year: int, _grid_transition_cost: float, _discount_rate: float = 0.02) -> float:
     """Calculate the total grid transition cost for a given year."""
-    if _year > YTT:
+    if _year > USA_NUM_YEARS_TO_TRANSITION:
         year_transition_cost_factor = 0  # $/Watt-yr
     else:
-        # TODO: This is just dividing two constants? Why? This doesn't seem right?
-        year_transition_cost_factor = NTCF_USA / YTT  # linear transition <- ?
-    return (year_transition_cost_factor * _e_trans) / ((1 + K_SYSTEM_TRANS) ** _year)
+        # TODO: Support non-USA countries.
+        year_transition_cost_factor = USA_TRANSITION_COST_FACTOR / USA_NUM_YEARS_TO_TRANSITION  # linear transition <- ?
+
+    try:
+        return (year_transition_cost_factor * _grid_transition_cost) / ((1 + _discount_rate) ** _year)
+    except ZeroDivisionError:
+        return 0.0
 
 
 def calculate_annual_ADORB_costs(

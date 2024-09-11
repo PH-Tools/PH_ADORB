@@ -16,6 +16,12 @@ class NoDataLoadedError(Exception):
         super().__init__(message)
 
 
+class MissingTableError(Exception):
+    def __init__(self, _table_name: str, _file_name: str):
+        message = f"Table '{_table_name}' not found in file '{_file_name}'."
+        super().__init__(message)
+
+
 class DataFileEPTables(BaseModel, Generic[T]):
     """A single .HTML Table Data File."""
 
@@ -60,11 +66,13 @@ def load_construction_cost_estimate_data(source_file_path: Path) -> list:
 
     table_name = "Construction Cost Estimate Summary"
     with open(source_file_path, "r") as file_data:
-        construction_cost_estimate = tablebyname(file_data, table_name) or []
+        try:
+            construction_cost_estimate = tablebyname(file_data, table_name) or []
+        except UnboundLocalError:
+            raise MissingTableError(table_name, source_file_path.name)
 
     if not construction_cost_estimate or len(construction_cost_estimate) != 2:
-        msg = f"Error loading the EnergyPlus '{table_name}' table data from: '{source_file_path.name}'"
-        raise Exception(msg)
+        raise MissingTableError(table_name, source_file_path.name)
 
     return construction_cost_estimate
 
@@ -79,13 +87,15 @@ def load_peak_electric_usage_data(source_file_path: Path) -> float:
         (float): The peak electric usage value in Watts.
     """
 
+    table_name = "Annual and Peak Values - Electricity"
     with open(source_file_path, "r") as file_data:
-        table_name = "Annual and Peak Values - Electricity"
-        all_table_data = tablebyname(file_data, table_name) or []
+        try:
+            all_table_data = tablebyname(file_data, table_name) or []
+        except UnboundLocalError:
+            raise MissingTableError(table_name, source_file_path.name)
 
     if not all_table_data or len(all_table_data) != 2:
-        msg = f"Error loading the EnergyPlus '{table_name}' " f"table data from: '{source_file_path}'"
-        raise Exception(msg)
+        raise MissingTableError(table_name, source_file_path.name)
 
     table_data = all_table_data[1]
     column_names = table_data[0]
@@ -117,13 +127,15 @@ def load_construction_quantities_data(source_file_path: Path) -> dict[str, float
         (dict[str, float]): A dict with the "Item Name" and "Quantity" (ft2).
     """
 
+    table_name = "Cost Line Item Details"
     with open(source_file_path, "r") as file_data:
-        table_name = "Cost Line Item Details"
-        all_table_data = tablebyname(file_data, table_name) or []
+        try:
+            all_table_data = tablebyname(file_data, table_name) or []
+        except UnboundLocalError:
+            raise MissingTableError(table_name, source_file_path.name)
 
     if not all_table_data or len(all_table_data) != 2:
-        msg = f"Error loading the EnergyPlus '{table_name}' " f"table data from: '{source_file_path}'"
-        raise Exception(msg)
+        raise MissingTableError(table_name, source_file_path.name)
 
     table_data = all_table_data[1]
     column_names = table_data[0]
