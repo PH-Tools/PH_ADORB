@@ -158,7 +158,6 @@ def load_construction_quantities_data(source_file_path: Path) -> dict[str, float
 # HTML Table Reader Functions
 # Adapted from EpPy library: /Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/.venv/lib/python3.10/site-packages/eppy/results/fasthtml.py
 # So we don't have to import the entire EpPy library.
-# TODO: Clean this up...
 
 
 def decode_line(_input: str | bytes, _encoding="utf-8") -> str:

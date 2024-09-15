@@ -17,6 +17,8 @@ from ph_adorb.measures import CO2MeasureCollection, load_CO2_measures_from_json_
 from ph_adorb.national_emissions import load_national_emissions_from_json_file
 from ph_adorb.variant import ReviveVariant
 
+# TODO: Create the Variant from the HBJSON file data....
+
 
 def convert_hb_model_to_ReviveVariant(hb_model: Model) -> ReviveVariant:
     """Convert the HB_Model to a new ReviveVariant object.
