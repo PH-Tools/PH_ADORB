@@ -3,28 +3,26 @@
 
 """Functions for importing Honeybee Models from HBJSON files."""
 
-# -- Dev Note: Required to import ALL the base packages to run the __init__ startup routines
-# -- which ensures that .revive properties slot is added to all HB Objects. This must be done before
-# -- running read_hb_json to ensure there is a place for all the .ph properties to go.
-
-# -----------------------------------------------------------------------------
-# -- Dev Note: Do not remove v ------------------------------------------------
-
 import json
 import logging
 import os
 import pathlib
 from typing import Dict
 
+# -- Dev Note: Required to import ALL the base packages to run the __init__ startup routines
+# -- which ensures that .revive properties slot is added to all HB Objects. This must be done before
+# -- running read_hb_json to ensure there is a place for all the .ph properties to go.
+# -----------------------------------------------------------------------------
+# -- Dev Note: Do NOT remove vvvvvv -------------------------------------------
 import honeybee
 import honeybee_energy
-import honeybee_energy_revive
 import honeybee_revive
-from honeybee import model
+import honeybee_energy_revive
 
-# -- Dev Note: Do not remove ^ ------------------------------------------------
+# -- Dev Note: Do NOT remove ^^^^^^ -------------------------------------------
 # -----------------------------------------------------------------------------
 
+from honeybee import model
 
 logger = logging.getLogger()
 

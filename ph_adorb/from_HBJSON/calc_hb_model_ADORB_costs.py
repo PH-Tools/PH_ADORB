@@ -36,7 +36,6 @@ def resolve_paths(_args: list[str]) -> tuple[Path, Path]:
             - [2] (str): The ADORB CSV Target path.
     """
 
-    print(">> Resolving file paths...")
     assert len(_args) == 3, "Error: Incorrect number of arguments."
 
     # -- Check if the HBJSON file exists.
@@ -59,22 +58,23 @@ def resolve_paths(_args: list[str]) -> tuple[Path, Path]:
 
 if __name__ == "__main__":
     print("- " * 50)
-    print(f">> Using Python: {sys.version}")
-    print(f">> Running the script: '{__file__.split('/')[-1]}'")
-    print(f">> With the arguments:")
-    print("\n".join([f"\t{i} | {a}" for i, a in enumerate(sys.argv)]))
+    print(f"\t>> Using Python: {sys.version}")
+    print(f"\t>> Running the script: '{__file__.split('/')[-1]}'")
+    print(f"\t>> With the arguments:")
+    print("\n".join([f"\t\t{i} | {a}" for i, a in enumerate(sys.argv)]))
 
     # --- Input / Output file Path
     # -------------------------------------------------------------------------
+    print("\t>> Resolving file paths...")
     SOURCE_HBJSON_FILE, TARGET_CSV_FILE = resolve_paths(sys.argv)
-    print(f">> Source HBJSON File: '{SOURCE_HBJSON_FILE}'")
-    print(f">> Target CSV File: '{TARGET_CSV_FILE}'")
+    print(f"\t>> Source HBJSON File: '{SOURCE_HBJSON_FILE}'")
+    print(f"\t>> Target CSV File: '{TARGET_CSV_FILE}'")
 
     # --- Read in the existing HB_JSON and re-build the HB Model
     # -------------------------------------------------------------------------
     hb_json_dict = read_HBJSON_file.read_hb_json_from_file(SOURCE_HBJSON_FILE)
     hb_model = read_HBJSON_file.convert_hbjson_dict_to_hb_model(hb_json_dict)
-    print(f">> HB Model '{hb_model.display_name}' successfully re-built.")
+    print(f"\t>> HB Model '{hb_model.display_name}' successfully re-built.")
 
     # --- Generate the Revive Variant.
     revive_variant = create_variant.convert_hb_model_to_ReviveVariant(hb_model)
@@ -83,3 +83,5 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     variant_ADORB_df = calculate_variant_ADORB_costs(revive_variant)
     variant_ADORB_df.to_csv(TARGET_CSV_FILE)
+    print("\t>> Done calculating the ADORB Costs. The CSV file has been saved.")
+    print("- " * 50)
