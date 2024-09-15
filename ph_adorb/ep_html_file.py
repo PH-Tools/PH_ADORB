@@ -5,7 +5,7 @@
 
 from io import StringIO
 from pathlib import Path
-from typing import Callable, Generic, TypeVar
+from typing import Callable, Generic, TypeVar, TextIO
 
 import pandas as pd
 from pydantic import BaseModel, PrivateAttr
@@ -63,16 +63,17 @@ class DataFileEPTables(BaseModel, Generic[T]):
 def load_construction_cost_estimate_data(source_file_path: Path) -> list:
     """Load the 'Construction Cost Estimate Summary' table data from the HTML file.
 
-    Args:
-        source_file_path (Path): The path to the EnergyPlus HTML file.
-    Returns:
-        (list): The table data as a list.
+    ### Arguments:
+    * source_file_path : The path to the EnergyPlus HTML file.
+
+    ### Returns:
+    * The table data.
     """
 
     table_name = "Construction Cost Estimate Summary"
     with open(source_file_path, "r") as file_data:
         try:
-            construction_cost_estimate = tablebyname(file_data, table_name) or []
+            construction_cost_estimate = table_by_name(file_data, table_name) or []
         except UnboundLocalError:
             raise MissingTableError(table_name, source_file_path.name)
 
@@ -85,17 +86,17 @@ def load_construction_cost_estimate_data(source_file_path: Path) -> list:
 def load_peak_electric_usage_data(source_file_path: Path) -> float:
     """Load the 'Annual and Peak Values - Electricity' table data from the HTML file.
 
-    Args:
-        source_file_path (Path): The path to the EnergyPlus HTML file.
+    ### Arguments:
+    * source_file_path : The path to the EnergyPlus HTML file.
 
-    Returns:
-        (float): The peak electric usage value in Watts.
+    ### Returns:
+    * The peak electric usage value in Watts.
     """
 
     table_name = "Annual and Peak Values - Electricity"
     with open(source_file_path, "r") as file_data:
         try:
-            all_table_data = tablebyname(file_data, table_name) or []
+            all_table_data = table_by_name(file_data, table_name) or []
         except UnboundLocalError:
             raise MissingTableError(table_name, source_file_path.name)
 
@@ -125,17 +126,17 @@ def load_peak_electric_usage_data(source_file_path: Path) -> float:
 def load_construction_quantities_data(source_file_path: Path) -> dict[str, float]:
     """Load the 'Construction Quantities' table data from the HTML file.
 
-    Args:
-        source_file_path (Path): The path to the EnergyPlus HTML file.
+    ### Arguments:
+    * source_file_path : The path to the EnergyPlus HTML file.
 
-    Returns:
-        (dict[str, float]): A dict with the "Item Name" and "Quantity" (ft2).
+    ### Returns:
+    * A dict with the "Item Name" and "Quantity" (ft2).
     """
 
     table_name = "Cost Line Item Details"
     with open(source_file_path, "r") as file_data:
         try:
-            all_table_data = tablebyname(file_data, table_name) or []
+            all_table_data = table_by_name(file_data, table_name) or []
         except UnboundLocalError:
             raise MissingTableError(table_name, source_file_path.name)
 
@@ -160,92 +161,102 @@ def load_construction_quantities_data(source_file_path: Path) -> dict[str, float
 # TODO: Clean this up...
 
 
-def decode_line(line: str | bytes, encoding="utf-8"):
-    """decodes bytes to string, if line is not bytes, line is returned
+def decode_line(_input: str | bytes, _encoding="utf-8") -> str:
+    """Decodes bytes to string, if needed.
 
-    It will first attempt to decode line with value of `encoding`. If that fails, it will try with encoding="ISO-8859-2". If that fails, it will return line.
+    It will first attempt to decode line with value of `encoding`. If that fails, it will try
+    with encoding="ISO-8859-2". If that fails, it will return line.
 
-    Why is it trying encoding="ISO-8859-2". Looks like E+ uses this encoding in some example files and which is then output in the HTML file
+    Why is it trying encoding="ISO-8859-2". Looks like E+ uses this encoding in some example
+    files and which is then output in the HTML file.
+
+    ### Arguments:
+    * _input : Line to decode
+    * encoding : (default='utf-8') Encoding to use to decode bytes to string.
+
+    ### Returns:
+    * Decoded input.
+    """
 
     # TODO this code looks fragile. Maybe use standard library HTML parse to deal with encoding?
 
-    Parameters
-    ----------
-    line : str, bytes
-    encoding : str
-
-    Returns
-    -------
-    line : str
-        decoded line
-    """
-    try:
-        return line.decode(encoding)
-    except (AttributeError, UnicodeDecodeError) as e:
-        if e.__class__ == UnicodeDecodeError:
-            # encoding could be ISO-8859-2 in e+ html
-            return decode_line(line, encoding="ISO-8859-2")
-        else:
-            return line
+    if isinstance(_input, bytes):
+        try:
+            return _input.decode(_encoding)
+        except UnicodeDecodeError:
+            try:
+                return _input.decode("ISO-8859-2")
+            except UnicodeDecodeError:
+                # Fallback to replace undecodable bytes
+                return _input.decode(errors="replace")
+    elif isinstance(_input, str):
+        return _input
+    else:
+        raise ValueError(f"file line must be of type 'str' or 'bytes'. Got: {type(_input)}")
 
 
-def tablebyname(_file_handle, _header: str) -> list | None:
+def table_by_name(_file_handle: TextIO, _header: str) -> list | None:
     """fast extraction of the table using the header to identify the table
 
-    This function reads only one table from the HTML file. This is in contrast to `results.readhtml.titletable` that will read all the tables into memory and allows you to interactively look thru them. The function `results.readhtml.titletable` can be very slow on large HTML files.
+    This function reads only one table from the HTML file. This is in
+    contrast to `read_html.title_table` that will read all the tables
+    nto memory and allows you to interactively look thru them. The
+    function `read_html.title_table` can be very slow on large HTML files.
 
-    This function is useful when you know which file you are looking for. It looks for the title line that is in bold just before the table. Some tables don't have such a title in bold. This function will not work for tables that don't have a title in bold
+    This function is useful when you know which file you are looking for.
+    It looks for the title line that is in bold just before the table.
+    Some tables don't have such a title in bold. This function will not
+    work for tables that don't have a title in bold.
 
-    Parameters
-    ----------
-    _file_handle : file like object
-        A file handle to the E+ HTML table file
-    header: str
-        This is the title of the table you are looking for
+    ### Arguments:
+    * _file_handle : A file handle to the E+ HTML table file
+    * header : This is the title of the table you are looking for
 
-    Returns
-    -------
-    titleandtable : (str, list)
-        - (title, table)
-            - title = previous item with a <b> tag
-            - table = rows -> [[cell1, cell2, ..], [cell1, cell2, ..], ..]
+    ### Returns:
+    * (title, table)
+        * title = previous item with a <b> tag
+        * table = rows -> [[cell1, cell2, ..], [cell1, cell2, ..], ..]
     """
     html_header = f"<b>{_header}</b><br><br>"
 
     with _file_handle:
+
         for line in _file_handle:
             line = decode_line(line)
+
             if line.strip() == html_header:
                 just_table = get_next_table(_file_handle)
-                the_table = f"{html_header}\n{just_table}"
                 break
+        else:
+            just_table = None
 
-    _file_handle = StringIO(the_table)
+    if just_table is None:
+        return None
+
+    _file_handle = StringIO(f"{html_header}\n{just_table}")
     h_tables = title_table(_file_handle)
+
     try:
         return list(h_tables[0])
-    except IndexError as e:
+    except IndexError:
         return None
 
 
-def get_next_table(_file_handle) -> str:
+def get_next_table(_file_handle: TextIO) -> str:
     """get the next table in the html file
 
-    Continues to read the file line by line and collects lines from the start of the next table until the end of the table
+    Continues to read the file line by line and collects lines from the start
+    of the next table until the end of the table.
 
-    Parameters
-    ----------
-    _file_handle : file like object
-        A file handle to the E+ HTML table file
+    ### Arguments:
+    * _file_handle : A file handle to the E+ HTML table file
 
-    Returns
-    -------
-    table : str
-        The table in HTML format
+    ### Returns:
+    * The table in HTML format
     """
 
-    table_lines = []
     TAG = "<table"
+    table_lines: list[str] = []
 
     # -----------------------------------------------------------------------------------
     for line in _file_handle:
