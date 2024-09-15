@@ -1,6 +1,10 @@
+# -*- coding: utf-8 -*-
+# -*- Python Version: 3.10 -*-
+
 """Fuel Types and cost related data."""
 
 from enum import Enum
+
 from pydantic import BaseModel
 
 

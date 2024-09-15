@@ -1,11 +1,16 @@
+# -*- coding: utf-8 -*-
+# -*- Python Version: 3.10 -*-
+
 """Functions to load and process the source data HTML files."""
 
+from io import StringIO
 from pathlib import Path
-from typing import Callable, TypeVar, Generic
+from typing import Callable, Generic, TypeVar
 
 import pandas as pd
-from eppy.results.fasthtml import tablebyname
 from pydantic import BaseModel, PrivateAttr
+
+from ph_adorb.read_html import title_table
 
 T = TypeVar("T")
 
@@ -146,3 +151,114 @@ def load_construction_quantities_data(source_file_path: Path) -> dict[str, float
 
     # Get a dict of the "Item Name" and "Quantity." columns
     return cost_line_item_detail_df.set_index("Item Name")["Quantity."].to_dict()
+
+
+# ---------------------------------------------------------------------------------------
+# HTML Table Reader Functions
+# Adapted from EpPy library: /Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/.venv/lib/python3.10/site-packages/eppy/results/fasthtml.py
+# So we don't have to import the entire EpPy library.
+# TODO: Clean this up...
+
+
+def decode_line(line: str | bytes, encoding="utf-8"):
+    """decodes bytes to string, if line is not bytes, line is returned
+
+    It will first attempt to decode line with value of `encoding`. If that fails, it will try with encoding="ISO-8859-2". If that fails, it will return line.
+
+    Why is it trying encoding="ISO-8859-2". Looks like E+ uses this encoding in some example files and which is then output in the HTML file
+
+    # TODO this code looks fragile. Maybe use standard library HTML parse to deal with encoding?
+
+    Parameters
+    ----------
+    line : str, bytes
+    encoding : str
+
+    Returns
+    -------
+    line : str
+        decoded line
+    """
+    try:
+        return line.decode(encoding)
+    except (AttributeError, UnicodeDecodeError) as e:
+        if e.__class__ == UnicodeDecodeError:
+            # encoding could be ISO-8859-2 in e+ html
+            return decode_line(line, encoding="ISO-8859-2")
+        else:
+            return line
+
+
+def tablebyname(_file_handle, _header: str) -> list | None:
+    """fast extraction of the table using the header to identify the table
+
+    This function reads only one table from the HTML file. This is in contrast to `results.readhtml.titletable` that will read all the tables into memory and allows you to interactively look thru them. The function `results.readhtml.titletable` can be very slow on large HTML files.
+
+    This function is useful when you know which file you are looking for. It looks for the title line that is in bold just before the table. Some tables don't have such a title in bold. This function will not work for tables that don't have a title in bold
+
+    Parameters
+    ----------
+    _file_handle : file like object
+        A file handle to the E+ HTML table file
+    header: str
+        This is the title of the table you are looking for
+
+    Returns
+    -------
+    titleandtable : (str, list)
+        - (title, table)
+            - title = previous item with a <b> tag
+            - table = rows -> [[cell1, cell2, ..], [cell1, cell2, ..], ..]
+    """
+    html_header = f"<b>{_header}</b><br><br>"
+
+    with _file_handle:
+        for line in _file_handle:
+            line = decode_line(line)
+            if line.strip() == html_header:
+                just_table = get_next_table(_file_handle)
+                the_table = f"{html_header}\n{just_table}"
+                break
+
+    _file_handle = StringIO(the_table)
+    h_tables = title_table(_file_handle)
+    try:
+        return list(h_tables[0])
+    except IndexError as e:
+        return None
+
+
+def get_next_table(_file_handle) -> str:
+    """get the next table in the html file
+
+    Continues to read the file line by line and collects lines from the start of the next table until the end of the table
+
+    Parameters
+    ----------
+    _file_handle : file like object
+        A file handle to the E+ HTML table file
+
+    Returns
+    -------
+    table : str
+        The table in HTML format
+    """
+
+    table_lines = []
+    TAG = "<table"
+
+    # -----------------------------------------------------------------------------------
+    for line in _file_handle:
+        line = decode_line(line)
+        if line.strip().startswith(TAG):
+            table_lines.append(line)
+            break
+
+    # -----------------------------------------------------------------------------------
+    for line in _file_handle:
+        line = decode_line(line)
+        table_lines.append(line)
+        if line.strip().startswith(TAG):
+            break
+
+    return "".join(table_lines)

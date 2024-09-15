@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# -*- Python Version: 3.10 -*-
+
 """Equipment (mechanical, lighting, etc..), and Collection classes."""
 
 import json

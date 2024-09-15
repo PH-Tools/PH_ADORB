@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# -*- Python Version: 3.10 -*-
+
 """A Building Variant with all of its relevant data, and related functions."""
 
 from collections import namedtuple
@@ -7,15 +10,15 @@ from pydantic import BaseModel, Field
 
 from ph_adorb.constructions import ConstructionCollection
 from ph_adorb.equipment import EquipmentCollection
+from ph_adorb.fuel import Fuel
 from ph_adorb.grid_region import GridRegion
 from ph_adorb.measures import CO2MeasureCollection
 from ph_adorb.national_emissions import NationalEmissions
-from ph_adorb.fuel import Fuel
 
 YearlyCost = namedtuple("YearlyCost", ["cost", "year"])
 
 
-class Variant(BaseModel):
+class ReviveVariant(BaseModel):
     """A single Variant of a building design."""
 
     name: str

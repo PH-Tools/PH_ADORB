@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# -*- Python Version: 3.10 -*-
+
 """Country-level CO2 Emissions data per US-Dollar (kg-CO2/$USD)."""
 
 import json

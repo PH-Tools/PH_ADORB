@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+# -*- Python Version: 3.10 -*-
+
 """Functions to load and process the source data CSV files."""
 
 from pathlib import Path
 from typing import Callable
 
 import pandas as pd
-from eppy.results.fasthtml import tablebyname
 from pydantic import BaseModel, PrivateAttr
 
 

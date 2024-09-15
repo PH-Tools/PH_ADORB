@@ -1,12 +1,7 @@
-## - An Example of the ADORB Cost Calculation Process
-
 from pathlib import Path
 
-import pandas as pd
-from pytest import approx
-from rich import print
+from honeybee.model import Model as Model
 
-from ph_adorb.adorb_cost import calculate_variant_ADORB_costs
 from ph_adorb.constructions import ConstructionCollection, load_constructions_from_json_file
 from ph_adorb.ep_csv_file import DataFileCSV, load_full_hourly_ep_output, load_monthly_meter_ep_output
 from ph_adorb.ep_html_file import (
@@ -23,44 +18,17 @@ from ph_adorb.national_emissions import load_national_emissions_from_json_file
 from ph_adorb.variant import ReviveVariant
 
 
-def test_result_csv_file_values(_output_path: Path):
-    # -----------------------------------------------------------------------------------
-    # -----------------------------------------------------------------------------------
-    # -----------------------------------------------------------------------------------
-    # TEST THE RESULTING CSV FILE VALUES TO ENSURE ALL THE VALUES ARE THE SAME AS AL'S
-    print("Testing the resulting CSV file.....", end="")
-    output_csv_path = _output_path / "Test_Variant_ADORBresults.csv"
-    assert output_csv_path.exists(), "The ADORB results CSV file was not created."
+def convert_hb_model_to_ReviveVariant(hb_model: Model) -> ReviveVariant:
+    """Convert the HB_Model to a new ReviveVariant object.
 
-    result_df = pd.read_csv(output_csv_path)
-    row_number, column_number = result_df.shape
-    assert row_number == 50, f"Result CSV has the wrong number of rows. Got: {row_number}"
-    assert column_number == 6, f"Result CSV has the wrong number of columns. Got: {column_number}"
+    Arguments:
+    ----------
+        * hb_model (HB_Model): The Honeybee Model to convert.
 
-    pv_direct = result_df["pv_direct_energy"].sum()
-    assert pv_direct == approx(54831.2503), f"'pv_direct_energy' is incorrect. Got: {pv_direct}"
-
-    pv_operational_CO2 = result_df["pv_operational_CO2"].sum()
-    # OLD (with sorting error):
-    # assert pv_operational_CO2 == approx(47328.76858), f"pv_operational_CO2is incorrect. Got: {pv_operational_CO2}"
-    assert pv_operational_CO2 == approx(
-        48212.80251852233
-    ), f"'pv_operational_CO2' is incorrect. Got: {pv_operational_CO2}"
-
-    pv_direct_MR = result_df["pv_direct_MR"].sum()
-    assert pv_direct_MR == approx(39862.77294), f"'pv_direct_MR' is incorrect. Got: {pv_direct_MR}"
-
-    pv_embodied_CO2 = result_df["pv_embodied_CO2"].sum()
-    assert pv_embodied_CO2 == approx(4318.927631), f"'pv_embodied_CO2' is incorrect. Got: {pv_embodied_CO2}"
-
-    pv_e_trans = result_df["pv_e_trans"].sum()
-    assert pv_e_trans == approx(8257.006251), f"'pv_e_trans' is incorrect. Got: {pv_e_trans}"
-    print("[green]all tests pass![/green]")
-
-
-# ---------------------------------------------------------------------------------------
-if __name__ == "__main__":
-    print("- " * 50)
+    Returns:
+    --------
+        * ReviveVariant: The ReviveVariant object.
+    """
     # -----------------------------------------------------------------------------------
     # -- Define Region Settings
     variant_name = "Test_Variant"
@@ -69,21 +37,21 @@ if __name__ == "__main__":
 
     # -----------------------------------------------------------------------------------
     # -- Resource File Paths
-    data_dir_path = Path("ph_adorb/data")
+    data_dir_path = Path("/Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/ph_adorb/data")
     national_emissions_path = data_dir_path / "national_emissions.json"
-    grid_region_data_path = data_dir_path / "cambium_factors" / "NWPPc.json"
+    grid_region_data_path = data_dir_path / "cambium_factors" / f"{grid_region_name}.json"
     measures_path = data_dir_path / "measures.json"
     constructions_path = data_dir_path / "constructions.json"
     equipment_path = data_dir_path / "equipment.json"
 
     # -- Input File Paths
-    input_dir_path = Path("tests/_test_input")
+    input_dir_path = Path("/Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/tests/_test_input")
     ep_full_hourly_results_csv = input_dir_path / "example_full_hourly.csv"
     ep_monthly_meter_results_csv = input_dir_path / "example_monthly_meter.csv"
     ep_table_results = input_dir_path / "example_annual_tables.htm"
 
     # -- Output File Paths
-    output_dir_path = Path("tests/_test_output")
+    output_dir_path = Path("/Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/tests/_test_output")
     ADORB_results_csv_path = output_dir_path / f"{variant_name}_ADORBresults.csv"
 
     # -----------------------------------------------------------------------------------
@@ -185,8 +153,8 @@ if __name__ == "__main__":
     )
 
     # -----------------------------------------------------------------------------------
-    # -- Setup a Variant with all its required attributes
-    variant = ReviveVariant(
+    # -- Create the actual Variant
+    revive_variant = ReviveVariant(
         name=variant_name,
         ep_hourly_results_df=ep_hourly_results.data,
         ep_meter_results_df=ep_meter_results.data,
@@ -203,11 +171,4 @@ if __name__ == "__main__":
         equipment_collection=used_equipment,
     )
 
-    # -- Calculate the actual ADORB yearly costs
-    variant_ADORB_df = calculate_variant_ADORB_costs(variant)
-
-    # -- Output the ADORB results to a new CSV file
-    variant_ADORB_df.to_csv(ADORB_results_csv_path)
-
-    # -- Test the resulting CSV values
-    test_result_csv_file_values(output_dir_path)
+    return revive_variant

@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# -*- Python Version: 3.10 -*-
+
 """Assembly (wall, floor, etc..) Constructions, and Collection classes."""
 
 import json

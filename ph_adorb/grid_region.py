@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# -*- Python Version: 3.10 -*-
+
 """Electricity Grid Region with Hourly CO2 Emissions Factors."""
 
 import json

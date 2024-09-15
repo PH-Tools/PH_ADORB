@@ -1,5 +1,6 @@
 from pathlib import Path
-from ph_adorb.grid_region import GridRegion, write_CO2_factors_to_json_file, load_CO2_factors_from_json_file
+
+from ph_adorb.grid_region import GridRegion, load_CO2_factors_from_json_file, write_CO2_factors_to_json_file
 
 
 def test_GridRegionFactors():

@@ -1,4 +1,4 @@
-eppy==0.5.63
+beautifulsoup4==4.12.3 
 pandas==2.2.2
 rich==13.8.0
 pydantic==1.10.18

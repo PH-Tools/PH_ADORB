@@ -3,12 +3,12 @@ import pandas as pd
 from ph_adorb.grid_region import GridRegion
 from ph_adorb.variant import (
     get_annual_electric_cost,
-    get_hourly_electric_CO2,
-    get_annual_gas_cost,
     get_annual_gas_CO2,
+    get_annual_gas_cost,
     get_carbon_measures_cost,
     get_carbon_measures_embodied_CO2,
     get_carbon_measures_embodied_CO2_first_cost,
+    get_hourly_electric_CO2,
 )
 
 

@@ -1,4 +1,4 @@
-from ph_adorb.fuel import FuelType, Fuel
+from ph_adorb.fuel import Fuel, FuelType
 
 
 def test_fuel():

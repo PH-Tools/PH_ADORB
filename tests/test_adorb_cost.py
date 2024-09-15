@@ -1,12 +1,13 @@
-from ph_adorb.variant import YearlyCost
 from pytest import approx
+
 from ph_adorb.adorb_cost import (
     pv_direct_energy_cost,
-    pv_operation_carbon_cost,
     pv_direct_maintenance_cost,
     pv_embodied_CO2_cost,
     pv_grid_transition_cost,
+    pv_operation_carbon_cost,
 )
+from ph_adorb.variant import YearlyCost
 
 
 def test_pv_direct_energy_cost():

@@ -1,10 +1,11 @@
 from pathlib import Path
+
 from ph_adorb.measures import (
+    CO2MeasureCollection,
     CO2MeasureType,
     CO2ReductionMeasure,
-    CO2MeasureCollection,
-    write_CO2_measures_to_json_file,
     load_CO2_measures_from_json_file,
+    write_CO2_measures_to_json_file,
 )
 
 

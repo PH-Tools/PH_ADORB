@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# -*- Python Version: 3.10 -*-
+
 """Utility functions used to generate the Cambium Factors by Region JSON-Files."""
 
 import os
@@ -6,7 +9,6 @@ from pathlib import Path
 
 import pandas as pd
 from pydantic import BaseModel, Field
-
 
 region_codes = [
     "AZNMc",

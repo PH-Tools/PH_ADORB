@@ -1,10 +1,12 @@
 from pathlib import Path
+
 import pytest
+
 from ph_adorb.ep_csv_file import (
     DataFileCSV,
-    load_monthly_meter_ep_output,
-    load_full_hourly_ep_output,
     NoDataLoadedError,
+    load_full_hourly_ep_output,
+    load_monthly_meter_ep_output,
 )
 
 
