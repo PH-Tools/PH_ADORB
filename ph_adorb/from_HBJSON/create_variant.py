@@ -1,6 +1,12 @@
+# -*- coding: utf-8 -*-
+# -*- Python Version: 3.10 -*-
+
+"""Create a new Phius ADORB Variant from a Honeybee-Model."""
+
 from pathlib import Path
 
-from honeybee.model import Model as Model
+from honeybee.model import Model
+from honeybee_revive.properties.model import ModelReviveProperties
 
 from ph_adorb.constructions import ConstructionCollection, load_constructions_from_json_file
 from ph_adorb.ep_csv_file import DataFileCSV, load_full_hourly_ep_output, load_monthly_meter_ep_output
@@ -20,8 +26,8 @@ from ph_adorb.variant import ReviveVariant
 # TODO: Create the Variant from the HBJSON file data....
 
 
-def convert_hb_model_to_ReviveVariant(hb_model: Model) -> ReviveVariant:
-    """Convert the HB_Model to a new ReviveVariant object.
+def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
+    """Convert the HB-Model to a new ReviveVariant object.
 
     Arguments:
     ----------
@@ -33,15 +39,21 @@ def convert_hb_model_to_ReviveVariant(hb_model: Model) -> ReviveVariant:
     """
     # -----------------------------------------------------------------------------------
     # -- Define Region Settings
-    variant_name = "Test_Variant"
+    variant_name = _hb_model.display_name or "unnamed"
     country_name = "USA"
-    grid_region_name = "NWPPc"
+
+    # -----------------------------------------------------------------------------------
+    # -- Get the Grid Region with CO2 Emission Factors
+    hb_model_prop: ModelReviveProperties = getattr(_hb_model.properties, "revive")
+    print(f"\t>> Using Cambium Grid Region: {hb_model_prop.grid_region.display_name}")
+    grid_region_data_path = Path(hb_model_prop.grid_region.filepath)
+    print(f"\t>> Loading the Cambium file: {grid_region_data_path}")
+    grid_region_data = load_CO2_factors_from_json_file(grid_region_data_path)
 
     # -----------------------------------------------------------------------------------
     # -- Resource File Paths
     data_dir_path = Path("/Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/ph_adorb/data")
     national_emissions_path = data_dir_path / "national_emissions.json"
-    grid_region_data_path = data_dir_path / "cambium_factors" / f"{grid_region_name}.json"
     measures_path = data_dir_path / "measures.json"
     constructions_path = data_dir_path / "constructions.json"
     equipment_path = data_dir_path / "equipment.json"
@@ -51,10 +63,6 @@ def convert_hb_model_to_ReviveVariant(hb_model: Model) -> ReviveVariant:
     ep_full_hourly_results_csv = input_dir_path / "example_full_hourly.csv"
     ep_monthly_meter_results_csv = input_dir_path / "example_monthly_meter.csv"
     ep_table_results = input_dir_path / "example_annual_tables.htm"
-
-    # -- Output File Paths
-    output_dir_path = Path("/Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/tests/_test_output")
-    ADORB_results_csv_path = output_dir_path / f"{variant_name}_ADORBresults.csv"
 
     # -----------------------------------------------------------------------------------
     # -- Load the EnergyPlus Simulation Result CSV Data
@@ -84,7 +92,6 @@ def convert_hb_model_to_ReviveVariant(hb_model: Model) -> ReviveVariant:
     # -----------------------------------------------------------------------------------
     # -- Setup the variant's attributes (constructions, measures, factors, etc.)
     national_emissions = load_national_emissions_from_json_file(national_emissions_path)
-    grid_region = load_CO2_factors_from_json_file(grid_region_data_path)
 
     # -- Variant Measures
     all_measures_from_database = load_CO2_measures_from_json_file(measures_path)
@@ -164,7 +171,7 @@ def convert_hb_model_to_ReviveVariant(hb_model: Model) -> ReviveVariant:
         peak_electric_usage_W=peak_electric_usage_W.data,
         electricity=electricity,
         gas=gas,
-        grid_region=grid_region,
+        grid_region=grid_region_data,
         national_emissions=national_emissions[country_name],
         analysis_duration=50,
         envelope_labor_cost_fraction=0.4,

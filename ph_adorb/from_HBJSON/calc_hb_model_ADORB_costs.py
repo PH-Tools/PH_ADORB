@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- Python Version: 3.10 -*-
 
-"""Run script to calculate ADORB Costs from a Honeybee-Model's HBJSON.
+"""Run script to calculate ADORB Costs from a Honeybee-Model's HBJSON and output to a CSV file.
 
 This script is called from the command line with the following arguments:
     * [1] (str): The path to the HBJSON file to read in.
@@ -79,9 +79,12 @@ if __name__ == "__main__":
     # --- Generate the Revive Variant.
     revive_variant = create_variant.convert_hb_model_to_ReviveVariant(hb_model)
 
-    # --- Calculate the ADORB cCosts, output as a CSV File
+    # --- Get the ADORB Costs as a Pandas DataFrame
     # -------------------------------------------------------------------------
     variant_ADORB_df = calculate_variant_ADORB_costs(revive_variant)
+
+    # --- Output the ADORB Costs to a CSV File
+    # -------------------------------------------------------------------------
     variant_ADORB_df.to_csv(TARGET_CSV_FILE)
     print("\t>> Done calculating the ADORB Costs. The CSV file has been saved.")
     print("- " * 50)

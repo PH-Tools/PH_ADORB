@@ -14,6 +14,8 @@ class GridRegion(BaseModel):
     """Regional CO2 Emissions Factors for single Electricity Grid Region."""
 
     region_code: str
+    region_name: str
+    description: str
     hourly_CO2_factors: dict[int, list[float]] = Field(default_factory=dict)
 
     def get_CO2_factors_as_df(self) -> pd.DataFrame:
