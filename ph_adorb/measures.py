@@ -11,8 +11,8 @@ from pydantic import BaseModel, PrivateAttr
 
 
 class CO2MeasureType(str, Enum):
-    PERFORMANCE = "Performance"
-    NON_PERFORMANCE = "Non-Performance"
+    PERFORMANCE = "PERFORMANCE"
+    NON_PERFORMANCE = "NON_PERFORMANCE"
 
 
 class CO2ReductionMeasure(BaseModel):

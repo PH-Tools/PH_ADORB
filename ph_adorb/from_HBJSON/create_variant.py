@@ -19,7 +19,7 @@ from ph_adorb.ep_html_file import (
 from ph_adorb.equipment import Equipment, EquipmentCollection, EquipmentType, load_equipment_from_json_file
 from ph_adorb.fuel import Fuel, FuelType
 from ph_adorb.grid_region import GridRegion, load_CO2_factors_from_json_file
-from ph_adorb.measures import CO2MeasureCollection, load_CO2_measures_from_json_file
+from ph_adorb.measures import CO2MeasureCollection, CO2ReductionMeasure, load_CO2_measures_from_json_file
 from ph_adorb.national_emissions import NationalEmissions, load_national_emissions_from_json_file
 from ph_adorb.variant import ReviveVariant
 
@@ -29,7 +29,7 @@ from ph_adorb.variant import ReviveVariant
 
 
 def get_hb_model_GridRegion(_hb_model_prop: ModelReviveProperties) -> GridRegion:
-    """Get the Grid Region data from the HB-Model."""
+    """Get the Grid Region name from the HB-Model and load the data from file."""
     grid_region_data_path = Path(_hb_model_prop.grid_region.filepath)
     return load_CO2_factors_from_json_file(grid_region_data_path)
 
@@ -37,6 +37,24 @@ def get_hb_model_GridRegion(_hb_model_prop: ModelReviveProperties) -> GridRegion
 def get_hb_model_NationalEmissions(_hb_model_prop: ModelReviveProperties) -> NationalEmissions:
     """Get the National Emissions data from the HB-Model."""
     return NationalEmissions(**_hb_model_prop.national_emissions_factors.to_dict())
+
+
+def get_hb_model_CO2_measures(_hb_model_prop: ModelReviveProperties) -> list[CO2ReductionMeasure]:
+    """Get all of the CO2 Reduction Measures from the HB-Model."""
+    measures_ = []
+    for co2_measure in _hb_model_prop.co2_measures:
+        measures_.append(
+            CO2ReductionMeasure(
+                measure_type=co2_measure.measure_type.value,
+                name=co2_measure.name,
+                year=co2_measure.year,
+                cost=co2_measure.cost,
+                kg_CO2=co2_measure.kg_CO2,
+                country_name=co2_measure.country_name,
+                labor_fraction=co2_measure.labor_fraction,
+            )
+        )
+    return measures_
 
 
 def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
@@ -56,7 +74,6 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
     # -----------------------------------------------------------------------------------
     # -- Resource File Paths
     data_dir_path = Path("/Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/ph_adorb/data")
-    measures_path = data_dir_path / "measures.json"
     constructions_path = data_dir_path / "constructions.json"
     equipment_path = data_dir_path / "equipment.json"
 
@@ -95,11 +112,9 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
     # -- Setup the variant's attributes (constructions, measures, factors, etc.)
 
     # -- Variant Measures
-    all_measures_from_database = load_CO2_measures_from_json_file(measures_path)
-    used_measures = CO2MeasureCollection()
-    used_measures.add_measure(all_measures_from_database["HP Replace 1"])
-    used_measures.add_measure(all_measures_from_database["HP Replace 2"])
-    used_measures.add_measure(all_measures_from_database["HP Replace 3"])
+    variant_measures = CO2MeasureCollection()
+    for co2_measure in get_hb_model_CO2_measures(hb_model_prop):
+        variant_measures.add_measure(co2_measure)
 
     # -- Variant Constructions
     all_constructions_from_database = load_constructions_from_json_file(constructions_path)
@@ -176,7 +191,7 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
         national_emissions=get_hb_model_NationalEmissions(hb_model_prop),
         analysis_duration=hb_model_prop.analysis_duration,
         envelope_labor_cost_fraction=hb_model_prop.envelope_labor_cost_fraction,
-        measure_collection=used_measures,
+        measure_collection=variant_measures,
         construction_collection=used_constructions,
         equipment_collection=used_equipment,
     )
