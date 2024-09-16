@@ -19,8 +19,8 @@ from ph_adorb.ep_html_file import (
 from ph_adorb.equipment import Equipment, EquipmentCollection, EquipmentType, load_equipment_from_json_file
 from ph_adorb.fuel import Fuel, FuelType
 from ph_adorb.grid_region import GridRegion, load_CO2_factors_from_json_file
-from ph_adorb.measures import CO2MeasureCollection, CO2ReductionMeasure, load_CO2_measures_from_json_file
-from ph_adorb.national_emissions import NationalEmissions, load_national_emissions_from_json_file
+from ph_adorb.measures import CO2MeasureCollection, CO2ReductionMeasure
+from ph_adorb.national_emissions import NationalEmissions
 from ph_adorb.variant import ReviveVariant
 
 # TODO: Create the Variant from the HBJSON file data....
@@ -39,11 +39,11 @@ def get_hb_model_NationalEmissions(_hb_model_prop: ModelReviveProperties) -> Nat
     return NationalEmissions(**_hb_model_prop.national_emissions_factors.to_dict())
 
 
-def get_hb_model_CO2_measures(_hb_model_prop: ModelReviveProperties) -> list[CO2ReductionMeasure]:
+def get_hb_model_CO2_measures(_hb_model_prop: ModelReviveProperties) -> CO2MeasureCollection:
     """Get all of the CO2 Reduction Measures from the HB-Model."""
-    measures_ = []
+    measure_collection_ = CO2MeasureCollection()
     for co2_measure in _hb_model_prop.co2_measures:
-        measures_.append(
+        measure_collection_.add_measure(
             CO2ReductionMeasure(
                 measure_type=co2_measure.measure_type.value,
                 name=co2_measure.name,
@@ -54,7 +54,61 @@ def get_hb_model_CO2_measures(_hb_model_prop: ModelReviveProperties) -> list[CO2
                 labor_fraction=co2_measure.labor_fraction,
             )
         )
-    return measures_
+    return measure_collection_
+
+
+def get_hb_model_constructions(_hb_model: Model, constructions_path, construction_quantities) -> ConstructionCollection:
+
+    # TODO: Refactor this to use the HB Model Constructions
+    all_constructions_from_database = load_constructions_from_json_file(constructions_path)
+    used_constructions = ConstructionCollection()
+    used_constructions.add_construction(all_constructions_from_database["Exterior Wall"])
+    used_constructions.add_construction(all_constructions_from_database["Exterior Roof"])
+    used_constructions.add_construction(all_constructions_from_database["Exterior Slab UnIns"])
+    used_constructions.add_construction(all_constructions_from_database["Interior Floor"])
+    used_constructions.add_construction(all_constructions_from_database["EXT_Door1"])
+    used_constructions.add_construction(all_constructions_from_database["Interior Wall"])
+    used_constructions.add_construction(all_constructions_from_database["Window_U-0.5 g=0.4"])
+    used_constructions.set_constructions_ft2_quantities(construction_quantities.data)
+
+    return used_constructions
+
+
+def get_hb_model_equipment(_hb_model: Model, equipment_path) -> EquipmentCollection:
+
+    # TODO: Refactor this to get equipment from the HB-Model
+
+    all_equipment_from_database = load_equipment_from_json_file(equipment_path)
+    used_equipment = EquipmentCollection()
+    used_equipment.add_equipment(all_equipment_from_database["GasFurnaceDXAC"])
+    used_equipment.add_equipment(all_equipment_from_database["GasBoiler"])
+    used_equipment.add_equipment(all_equipment_from_database["Refrigerator [360]"])
+    used_equipment.add_equipment(all_equipment_from_database["Clothes Wash [160]"])
+    used_equipment.add_equipment(all_equipment_from_database["Clothes Dryer"])
+    used_equipment.add_equipment(all_equipment_from_database["Cooktop"])
+    used_equipment.add_equipment(all_equipment_from_database["Dishwasher [360]"])
+    used_equipment.add_equipment(all_equipment_from_database["Lights [60]"])
+
+    # TODO: How to handle PV and Batteries? How is Al doing it?
+    used_equipment.add_equipment(
+        Equipment(
+            name="PV Array",
+            equipment_type=EquipmentType.PV_ARRAY,
+            cost=5,
+            lifetime_years=25,
+            labor_fraction=0.25,
+        )
+    )
+    used_equipment.add_equipment(
+        Equipment(
+            name="Battery",
+            equipment_type=EquipmentType.BATTERY,
+            cost=3_894.54,
+            lifetime_years=10,
+            labor_fraction=0.5,
+        )
+    )
+    return used_equipment
 
 
 def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
@@ -68,8 +122,6 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
     --------
         * ReviveVariant: The ReviveVariant object.
     """
-    # -- Alias
-    hb_model_prop: ModelReviveProperties = getattr(_hb_model.properties, "revive")
 
     # -----------------------------------------------------------------------------------
     # -- Resource File Paths
@@ -109,58 +161,6 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
     peak_electric_usage_W.load_file_data()
 
     # -----------------------------------------------------------------------------------
-    # -- Setup the variant's attributes (constructions, measures, factors, etc.)
-
-    # -- Variant Measures
-    variant_measures = CO2MeasureCollection()
-    for co2_measure in get_hb_model_CO2_measures(hb_model_prop):
-        variant_measures.add_measure(co2_measure)
-
-    # -- Variant Constructions
-    all_constructions_from_database = load_constructions_from_json_file(constructions_path)
-    used_constructions = ConstructionCollection()
-    used_constructions.add_construction(all_constructions_from_database["Exterior Wall"])
-    used_constructions.add_construction(all_constructions_from_database["Exterior Roof"])
-    used_constructions.add_construction(all_constructions_from_database["Exterior Slab UnIns"])
-    used_constructions.add_construction(all_constructions_from_database["Interior Floor"])
-    used_constructions.add_construction(all_constructions_from_database["EXT_Door1"])
-    used_constructions.add_construction(all_constructions_from_database["Interior Wall"])
-    used_constructions.add_construction(all_constructions_from_database["Window_U-0.5 g=0.4"])
-    used_constructions.set_constructions_ft2_quantities(construction_quantities.data)
-
-    # -- Variant Equipment
-    all_equipment_from_database = load_equipment_from_json_file(equipment_path)
-    used_equipment = EquipmentCollection()
-    used_equipment.add_equipment(all_equipment_from_database["GasFurnaceDXAC"])
-    used_equipment.add_equipment(all_equipment_from_database["GasBoiler"])
-    used_equipment.add_equipment(all_equipment_from_database["Refrigerator [360]"])
-    used_equipment.add_equipment(all_equipment_from_database["Clothes Wash [160]"])
-    used_equipment.add_equipment(all_equipment_from_database["Clothes Dryer"])
-    used_equipment.add_equipment(all_equipment_from_database["Cooktop"])
-    used_equipment.add_equipment(all_equipment_from_database["Dishwasher [360]"])
-    used_equipment.add_equipment(all_equipment_from_database["Lights [60]"])
-
-    # TODO: How to handle PV and Batteries? How is Al doing it?
-    used_equipment.add_equipment(
-        Equipment(
-            name="PV Array",
-            equipment_type=EquipmentType.PV_ARRAY,
-            cost=5,
-            lifetime_years=25,
-            labor_fraction=0.25,
-        )
-    )
-    used_equipment.add_equipment(
-        Equipment(
-            name="Battery",
-            equipment_type=EquipmentType.BATTERY,
-            cost=3_894.54,
-            lifetime_years=10,
-            labor_fraction=0.5,
-        )
-    )
-
-    # -----------------------------------------------------------------------------------
     # -- Setup the Variant's Fuel Types and Costs
     electricity = Fuel(
         fuel_type=FuelType.ELECTRICITY,
@@ -179,6 +179,7 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
 
     # -----------------------------------------------------------------------------------
     # -- Create the actual Variant
+    hb_model_properties: ModelReviveProperties = getattr(_hb_model.properties, "revive")
     revive_variant = ReviveVariant(
         name=_hb_model.display_name or "unnamed",
         ep_hourly_results_df=ep_hourly_results.data,
@@ -187,13 +188,13 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
         peak_electric_usage_W=peak_electric_usage_W.data,
         electricity=electricity,
         gas=gas,
-        grid_region=get_hb_model_GridRegion(hb_model_prop),
-        national_emissions=get_hb_model_NationalEmissions(hb_model_prop),
-        analysis_duration=hb_model_prop.analysis_duration,
-        envelope_labor_cost_fraction=hb_model_prop.envelope_labor_cost_fraction,
-        measure_collection=variant_measures,
-        construction_collection=used_constructions,
-        equipment_collection=used_equipment,
+        grid_region=get_hb_model_GridRegion(hb_model_properties),
+        national_emissions=get_hb_model_NationalEmissions(hb_model_properties),
+        analysis_duration=hb_model_properties.analysis_duration,
+        envelope_labor_cost_fraction=hb_model_properties.envelope_labor_cost_fraction,
+        measure_collection=get_hb_model_CO2_measures(hb_model_properties),
+        construction_collection=get_hb_model_constructions(_hb_model, constructions_path, construction_quantities),
+        equipment_collection=get_hb_model_equipment(_hb_model, equipment_path),
     )
 
     return revive_variant
