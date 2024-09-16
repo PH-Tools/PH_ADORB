@@ -16,13 +16,13 @@ from typing import Dict
 # -- Dev Note: Do NOT remove vvvvvv -------------------------------------------
 import honeybee
 import honeybee_energy
-import honeybee_revive
 import honeybee_energy_revive
+import honeybee_revive
+from honeybee import model
 
 # -- Dev Note: Do NOT remove ^^^^^^ -------------------------------------------
 # -----------------------------------------------------------------------------
 
-from honeybee import model
 
 logger = logging.getLogger()
 

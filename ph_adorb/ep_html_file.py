@@ -5,7 +5,7 @@
 
 from io import StringIO
 from pathlib import Path
-from typing import Callable, Generic, TypeVar, TextIO
+from typing import Callable, Generic, TextIO, TypeVar
 
 import pandas as pd
 from pydantic import BaseModel, PrivateAttr

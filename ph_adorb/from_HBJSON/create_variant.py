@@ -18,12 +18,25 @@ from ph_adorb.ep_html_file import (
 )
 from ph_adorb.equipment import Equipment, EquipmentCollection, EquipmentType, load_equipment_from_json_file
 from ph_adorb.fuel import Fuel, FuelType
-from ph_adorb.grid_region import load_CO2_factors_from_json_file
+from ph_adorb.grid_region import GridRegion, load_CO2_factors_from_json_file
 from ph_adorb.measures import CO2MeasureCollection, load_CO2_measures_from_json_file
-from ph_adorb.national_emissions import load_national_emissions_from_json_file
+from ph_adorb.national_emissions import NationalEmissions, load_national_emissions_from_json_file
 from ph_adorb.variant import ReviveVariant
 
 # TODO: Create the Variant from the HBJSON file data....
+
+# TODO: Add error / warning messages if GridRegion and NationalEmissions are not set in the HB-Model.
+
+
+def get_hb_model_GridRegion(_hb_model_prop: ModelReviveProperties) -> GridRegion:
+    """Get the Grid Region data from the HB-Model."""
+    grid_region_data_path = Path(_hb_model_prop.grid_region.filepath)
+    return load_CO2_factors_from_json_file(grid_region_data_path)
+
+
+def get_hb_model_NationalEmissions(_hb_model_prop: ModelReviveProperties) -> NationalEmissions:
+    """Get the National Emissions data from the HB-Model."""
+    return NationalEmissions(**_hb_model_prop.national_emissions_factors.to_dict())
 
 
 def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
@@ -37,23 +50,12 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
     --------
         * ReviveVariant: The ReviveVariant object.
     """
-    # -----------------------------------------------------------------------------------
-    # -- Define Region Settings
-    variant_name = _hb_model.display_name or "unnamed"
-    country_name = "USA"
-
-    # -----------------------------------------------------------------------------------
-    # -- Get the Grid Region with CO2 Emission Factors
+    # -- Alias
     hb_model_prop: ModelReviveProperties = getattr(_hb_model.properties, "revive")
-    print(f"\t>> Using Cambium Grid Region: {hb_model_prop.grid_region.display_name}")
-    grid_region_data_path = Path(hb_model_prop.grid_region.filepath)
-    print(f"\t>> Loading the Cambium file: {grid_region_data_path}")
-    grid_region_data = load_CO2_factors_from_json_file(grid_region_data_path)
 
     # -----------------------------------------------------------------------------------
     # -- Resource File Paths
     data_dir_path = Path("/Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/ph_adorb/data")
-    national_emissions_path = data_dir_path / "national_emissions.json"
     measures_path = data_dir_path / "measures.json"
     constructions_path = data_dir_path / "constructions.json"
     equipment_path = data_dir_path / "equipment.json"
@@ -91,7 +93,6 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
 
     # -----------------------------------------------------------------------------------
     # -- Setup the variant's attributes (constructions, measures, factors, etc.)
-    national_emissions = load_national_emissions_from_json_file(national_emissions_path)
 
     # -- Variant Measures
     all_measures_from_database = load_CO2_measures_from_json_file(measures_path)
@@ -164,17 +165,17 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
     # -----------------------------------------------------------------------------------
     # -- Create the actual Variant
     revive_variant = ReviveVariant(
-        name=variant_name,
+        name=_hb_model.display_name or "unnamed",
         ep_hourly_results_df=ep_hourly_results.data,
         ep_meter_results_df=ep_meter_results.data,
         construction_cost_estimate=construction_cost_estimate.data,
         peak_electric_usage_W=peak_electric_usage_W.data,
         electricity=electricity,
         gas=gas,
-        grid_region=grid_region_data,
-        national_emissions=national_emissions[country_name],
-        analysis_duration=50,
-        envelope_labor_cost_fraction=0.4,
+        grid_region=get_hb_model_GridRegion(hb_model_prop),
+        national_emissions=get_hb_model_NationalEmissions(hb_model_prop),
+        analysis_duration=hb_model_prop.analysis_duration,
+        envelope_labor_cost_fraction=hb_model_prop.envelope_labor_cost_fraction,
         measure_collection=used_measures,
         construction_collection=used_constructions,
         equipment_collection=used_equipment,
