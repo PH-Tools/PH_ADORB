@@ -41,14 +41,14 @@ def test_CO2ReductionMeasure_to_json():
     json_str = measure.json()
     assert (
         json_str
-        == '{"measure_type": "Performance", "name": "Test Measure", "year": 2023.0, "cost": 1000.0, "kg_CO2": 100.0, "country_name": "DE", "labor_fraction": 0.5}'
+        == '{"measure_type": "PERFORMANCE", "name": "Test Measure", "year": 2023.0, "cost": 1000.0, "kg_CO2": 100.0, "country_name": "DE", "labor_fraction": 0.5}'
     )
 
 
 def test_CO2ReductionMeasure_from_json():
     measure = CO2ReductionMeasure.parse_obj(
         {
-            "measure_type": "Performance",
+            "measure_type": "PERFORMANCE",
             "name": "Test Measure",
             "year": 2023,
             "cost": 1000,
@@ -106,7 +106,7 @@ def test_CO2ReductionMeasureCollection():
     assert measure2.name in collection.keys()
 
 
-def test_CO2ReductionMeasureCollection_Performance():
+def test_CO2ReductionMeasureCollection_PERFORMANCE():
     collection = CO2MeasureCollection()
     measure1 = CO2ReductionMeasure(
         measure_type=CO2MeasureType.PERFORMANCE,

@@ -37,6 +37,8 @@ def test_get_hourly_electric_CO2():
     )
     grid_region_factors = GridRegion(
         region_code="Test",
+        region_name="Germany",
+        description="Germany",
         hourly_CO2_factors={k: v for k, v in zip(range(2023, 2023 + 89), [[0.0] * 100] * 89)},
     )
     result = get_hourly_electric_CO2(_hourly=df, _grid_region_factors=grid_region_factors)
