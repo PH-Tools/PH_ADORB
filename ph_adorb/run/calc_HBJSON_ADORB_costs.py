@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # -*- Python Version: 3.10 -*-
 
-"""Run script to calculate ADORB Costs from a Honeybee-Model's HBJSON and output to a CSV file.
+"""A script to calculate ADORB Costs from a Honeybee-Model-HBJSON-File, and outputs to a CSV file.
 
 This script is called from the command line with the following arguments:
     * [1] (str): The path to the HBJSON file to read in.
