@@ -1,14 +1,14 @@
 from pathlib import Path
 
 from ph_adorb.national_emissions import (
-    NationalEmissions,
+    PhAdorbNationalEmissions,
     load_national_emissions_from_json_file,
     write_national_emissions_to_json_file,
 )
 
 
 def test_NationalEmissions():
-    national_emissions = NationalEmissions(
+    national_emissions = PhAdorbNationalEmissions(
         country_name="Germany",
         us_trading_rank=4,
         GDP_million_USD=4.2,
@@ -30,7 +30,7 @@ def test_NationalEmissions():
 
 
 def test_NationalEmissions_to_json():
-    national_emissions = NationalEmissions(
+    national_emissions = PhAdorbNationalEmissions(
         country_name="Germany",
         us_trading_rank=4,
         GDP_million_USD=4.2,
@@ -45,7 +45,7 @@ def test_NationalEmissions_to_json():
 
 
 def test_NationalEmissions_from_json():
-    national_emissions = NationalEmissions.parse_obj(
+    national_emissions = PhAdorbNationalEmissions.parse_obj(
         {
             "country_name": "Germany",
             "us_trading_rank": 4,
@@ -69,7 +69,7 @@ def test_NationalEmissions_from_json():
 
 
 def test_national_emissions_json_file():
-    national_emissions = NationalEmissions(
+    national_emissions = PhAdorbNationalEmissions(
         country_name="Germany",
         us_trading_rank=4,
         GDP_million_USD=4.2,

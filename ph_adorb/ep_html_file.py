@@ -123,37 +123,6 @@ def load_peak_electric_usage_data(source_file_path: Path) -> float:
     return float(peak_electric_usage)
 
 
-def load_construction_quantities_data(source_file_path: Path) -> dict[str, float]:
-    """Load the 'Construction Quantities' table data from the HTML file.
-
-    ### Arguments:
-    * source_file_path : The path to the EnergyPlus HTML file.
-
-    ### Returns:
-    * A dict with the "Item Name" and "Quantity" (ft2).
-    """
-
-    table_name = "Cost Line Item Details"
-    with open(source_file_path, "r") as file_data:
-        try:
-            all_table_data = table_by_name(file_data, table_name) or []
-        except UnboundLocalError:
-            raise MissingTableError(table_name, source_file_path.name)
-
-    if not all_table_data or len(all_table_data) != 2:
-        raise MissingTableError(table_name, source_file_path.name)
-
-    table_data = all_table_data[1]
-    column_names = table_data[0]
-    cost_line_item_detail_df = pd.DataFrame(table_data[1:], columns=column_names).iloc[:-1]
-
-    # Change the 'Item Name' column to be all uppercase for more consistent lookups later on
-    cost_line_item_detail_df["Item Name"] = cost_line_item_detail_df["Item Name"].str.upper()
-
-    # Get a dict of the "Item Name" and "Quantity." columns
-    return cost_line_item_detail_df.set_index("Item Name")["Quantity."].to_dict()
-
-
 # ---------------------------------------------------------------------------------------
 # HTML Table Reader Functions
 # Adapted from EpPy library: /Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/.venv/lib/python3.10/site-packages/eppy/results/fasthtml.py

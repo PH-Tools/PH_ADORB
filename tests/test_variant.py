@@ -1,6 +1,6 @@
 import pandas as pd
 
-from ph_adorb.grid_region import GridRegion
+from ph_adorb.grid_region import PhAdorbGridRegion
 from ph_adorb.variant import (
     get_annual_electric_cost,
     get_annual_gas_CO2,
@@ -35,7 +35,7 @@ def test_get_hourly_electric_CO2():
             "Whole Building:Facility Total Purchased Electricity Energy [J](Hourly)": [1000] * 100,
         }
     )
-    grid_region_factors = GridRegion(
+    grid_region_factors = PhAdorbGridRegion(
         region_code="Test",
         region_name="Germany",
         description="Germany",

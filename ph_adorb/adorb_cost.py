@@ -13,7 +13,7 @@ electrical service capacity.
 import pandas as pd
 
 import ph_adorb.variant as variant
-from ph_adorb.variant import ReviveVariant, YearlyCost
+from ph_adorb.variant import PhAdorbVariant, YearlyCost
 
 # -- Constants
 # TODO: Make this work in local currency? Always in USD?
@@ -133,7 +133,7 @@ def calculate_annual_ADORB_costs(
 # ---------------------------------------------------------------------------------------
 
 
-def calculate_variant_ADORB_costs(_variant: ReviveVariant) -> pd.DataFrame:
+def calculate_variant_ADORB_costs(_variant: PhAdorbVariant) -> pd.DataFrame:
     """Return a DataFrame with the Variant's ADORB costs for each year of the analysis duration."""
 
     # -----------------------------------------------------------------------------------

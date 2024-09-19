@@ -10,7 +10,7 @@ import pandas as pd
 from pydantic import BaseModel, Field
 
 
-class GridRegion(BaseModel):
+class PhAdorbGridRegion(BaseModel):
     """Regional CO2 Emissions Factors for single Electricity Grid Region."""
 
     region_code: str
@@ -33,13 +33,13 @@ class GridRegion(BaseModel):
         return pd.DataFrame(self.hourly_CO2_factors)
 
 
-def write_CO2_factors_to_json_file(_file_path: Path, _grid_region: GridRegion):
+def write_CO2_factors_to_json_file(_file_path: Path, _grid_region: PhAdorbGridRegion):
     """Write the CO2 factors for the grid-region to a JSON file."""
     with open(_file_path, "w") as json_file:
         json.dump(_grid_region.dict(), json_file, indent=4)
 
 
-def load_CO2_factors_from_json_file(_file_path: Path) -> GridRegion:
+def load_CO2_factors_from_json_file(_file_path: Path) -> PhAdorbGridRegion:
     """Load the CO2 factors for the grid-region from a JSON file."""
     with open(_file_path, "r") as json_file:
-        return GridRegion(**json.load(json_file))
+        return PhAdorbGridRegion(**json.load(json_file))

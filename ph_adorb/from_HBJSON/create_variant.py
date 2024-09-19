@@ -4,47 +4,65 @@
 """Create a new Phius ADORB Variant from a Honeybee-Model."""
 
 from pathlib import Path
+from collections import defaultdict
 
 from honeybee.model import Model
-from honeybee_revive.properties.model import ModelReviveProperties
+from honeybee_energy.construction.opaque import OpaqueConstruction
+from honeybee_energy.properties.model import ModelEnergyProperties
 
-from ph_adorb.constructions import ConstructionCollection, load_constructions_from_json_file
+from honeybee_revive.properties.model import ModelReviveProperties
+from honeybee_energy_revive.properties.construction.opaque import OpaqueConstructionReviveProperties
+
+from ph_adorb.constructions import PhAdorbConstructionCollection
 from ph_adorb.ep_csv_file import DataFileCSV, load_full_hourly_ep_output, load_monthly_meter_ep_output
 from ph_adorb.ep_html_file import (
     DataFileEPTables,
     load_construction_cost_estimate_data,
-    load_construction_quantities_data,
     load_peak_electric_usage_data,
 )
-from ph_adorb.equipment import Equipment, EquipmentCollection, EquipmentType, load_equipment_from_json_file
-from ph_adorb.fuel import Fuel, FuelType
-from ph_adorb.grid_region import GridRegion, load_CO2_factors_from_json_file
-from ph_adorb.measures import CO2MeasureCollection, CO2ReductionMeasure
-from ph_adorb.national_emissions import NationalEmissions
-from ph_adorb.variant import ReviveVariant
+from ph_adorb.equipment import (
+    PhAdorbEquipment,
+    PhAdorbEquipmentCollection,
+    PhAdorbEquipmentType,
+    load_equipment_from_json_file,
+)
+from ph_adorb.fuel import PhAdorbFuel, PhAdorbFuelType
+from ph_adorb.grid_region import PhAdorbGridRegion, load_CO2_factors_from_json_file
+from ph_adorb.measures import PhAdorbCO2MeasureCollection, PhAdorbCO2ReductionMeasure
+from ph_adorb.national_emissions import PhAdorbNationalEmissions
+from ph_adorb.variant import PhAdorbVariant
+from ph_adorb.constructions import PhAdorbConstruction
 
 # TODO: Create the Variant from the HBJSON file data....
 
 # TODO: Add error / warning messages if GridRegion and NationalEmissions are not set in the HB-Model.
 
 
-def get_hb_model_GridRegion(_hb_model_prop: ModelReviveProperties) -> GridRegion:
+def get_hb_model_construction_quantities(_hb_model: Model) -> dict[str, float]:
+    """Return a dictionary of total construction quantities (areas) from the HB-Model."""
+    construction_quantities_ = defaultdict(float)
+    for face in _hb_model.faces:
+        construction_quantities_[face.properties.energy.construction.identifier] += face.area
+    return construction_quantities_
+
+
+def get_PhAdorbGridRegion_from_hb_model(_hb_model_prop: ModelReviveProperties) -> PhAdorbGridRegion:
     """Get the Grid Region name from the HB-Model and load the data from file."""
     grid_region_data_path = Path(_hb_model_prop.grid_region.filepath)
     return load_CO2_factors_from_json_file(grid_region_data_path)
 
 
-def get_hb_model_NationalEmissions(_hb_model_prop: ModelReviveProperties) -> NationalEmissions:
+def get_PhAdorbNationalEmissions_from_hb_mode(_hb_model_prop: ModelReviveProperties) -> PhAdorbNationalEmissions:
     """Get the National Emissions data from the HB-Model."""
-    return NationalEmissions(**_hb_model_prop.national_emissions_factors.to_dict())
+    return PhAdorbNationalEmissions(**_hb_model_prop.national_emissions_factors.to_dict())
 
 
-def get_hb_model_CO2_measures(_hb_model_prop: ModelReviveProperties) -> CO2MeasureCollection:
+def get_PhAdorbCO2Measures_from_hb_model(_hb_model_prop: ModelReviveProperties) -> PhAdorbCO2MeasureCollection:
     """Get all of the CO2 Reduction Measures from the HB-Model."""
-    measure_collection_ = CO2MeasureCollection()
+    measure_collection_ = PhAdorbCO2MeasureCollection()
     for co2_measure in _hb_model_prop.co2_measures:
         measure_collection_.add_measure(
-            CO2ReductionMeasure(
+            PhAdorbCO2ReductionMeasure(
                 measure_type=co2_measure.measure_type.value,
                 name=co2_measure.name,
                 year=co2_measure.year,
@@ -57,29 +75,39 @@ def get_hb_model_CO2_measures(_hb_model_prop: ModelReviveProperties) -> CO2Measu
     return measure_collection_
 
 
-def get_hb_model_constructions(_hb_model: Model, constructions_path, construction_quantities) -> ConstructionCollection:
-
-    # TODO: Refactor this to use the HB Model Constructions
-    all_constructions_from_database = load_constructions_from_json_file(constructions_path)
-    used_constructions = ConstructionCollection()
-    used_constructions.add_construction(all_constructions_from_database["Exterior Wall"])
-    used_constructions.add_construction(all_constructions_from_database["Exterior Roof"])
-    used_constructions.add_construction(all_constructions_from_database["Exterior Slab UnIns"])
-    used_constructions.add_construction(all_constructions_from_database["Interior Floor"])
-    used_constructions.add_construction(all_constructions_from_database["EXT_Door1"])
-    used_constructions.add_construction(all_constructions_from_database["Interior Wall"])
-    used_constructions.add_construction(all_constructions_from_database["Window_U-0.5 g=0.4"])
-    used_constructions.set_constructions_ft2_quantities(construction_quantities.data)
-
-    return used_constructions
+def convert_hb_construction(_hb_construction: OpaqueConstruction) -> PhAdorbConstruction:
+    """Convert a Honeybee Opaque Construction to a Phius ADORB Construction."""
+    hb_const_prop: OpaqueConstructionReviveProperties = getattr(_hb_construction.properties, "revive")
+    return PhAdorbConstruction(
+        display_name=_hb_construction.display_name,
+        identifier=_hb_construction.identifier,
+        CO2_kg_per_m2=hb_const_prop.kg_CO2_per_m2.value,
+        cost_per_m2=hb_const_prop.cost_per_m2.value,
+        lifetime_years=hb_const_prop.lifetime_years,
+        labor_fraction=hb_const_prop.labor_fraction,
+    )
 
 
-def get_hb_model_equipment(_hb_model: Model, equipment_path) -> EquipmentCollection:
+def get_PhAdorbConstructions_from_hb_model(_hb_model: Model) -> PhAdorbConstructionCollection:
+    """Return a ConstructionCollection with all of the Constructions from the HB-Model."""
+    construction_areas = get_hb_model_construction_quantities(_hb_model)
+
+    construction_collection = PhAdorbConstructionCollection()
+    model_prop: ModelEnergyProperties = getattr(_hb_model.properties, "energy")
+    for construction in model_prop.constructions:
+        new_construction = convert_hb_construction(construction)
+        new_construction.area_m2 = construction_areas[construction.identifier]
+        construction_collection.add_construction(new_construction)
+
+    return construction_collection
+
+
+def get_PhAdorbEquipment_from_hb_model(_hb_model: Model, equipment_path) -> PhAdorbEquipmentCollection:
 
     # TODO: Refactor this to get equipment from the HB-Model
 
     all_equipment_from_database = load_equipment_from_json_file(equipment_path)
-    used_equipment = EquipmentCollection()
+    used_equipment = PhAdorbEquipmentCollection()
     used_equipment.add_equipment(all_equipment_from_database["GasFurnaceDXAC"])
     used_equipment.add_equipment(all_equipment_from_database["GasBoiler"])
     used_equipment.add_equipment(all_equipment_from_database["Refrigerator [360]"])
@@ -91,18 +119,18 @@ def get_hb_model_equipment(_hb_model: Model, equipment_path) -> EquipmentCollect
 
     # TODO: How to handle PV and Batteries? How is Al doing it?
     used_equipment.add_equipment(
-        Equipment(
+        PhAdorbEquipment(
             name="PV Array",
-            equipment_type=EquipmentType.PV_ARRAY,
+            equipment_type=PhAdorbEquipmentType.PV_ARRAY,
             cost=5,
             lifetime_years=25,
             labor_fraction=0.25,
         )
     )
     used_equipment.add_equipment(
-        Equipment(
+        PhAdorbEquipment(
             name="Battery",
-            equipment_type=EquipmentType.BATTERY,
+            equipment_type=PhAdorbEquipmentType.BATTERY,
             cost=3_894.54,
             lifetime_years=10,
             labor_fraction=0.5,
@@ -111,7 +139,7 @@ def get_hb_model_equipment(_hb_model: Model, equipment_path) -> EquipmentCollect
     return used_equipment
 
 
-def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
+def get_PhAdorbVariant_from_hb_model(_hb_model: Model) -> PhAdorbVariant:
     """Convert the HB-Model to a new ReviveVariant object.
 
     Arguments:
@@ -126,7 +154,6 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
     # -----------------------------------------------------------------------------------
     # -- Resource File Paths
     data_dir_path = Path("/Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/ph_adorb/data")
-    constructions_path = data_dir_path / "constructions.json"
     equipment_path = data_dir_path / "equipment.json"
 
     # -- Input File Paths
@@ -150,11 +177,6 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
     )
     construction_cost_estimate.load_file_data()
 
-    construction_quantities = DataFileEPTables[dict[str, float]](
-        source_file_path=ep_table_results, loader=load_construction_quantities_data
-    )
-    construction_quantities.load_file_data()
-
     peak_electric_usage_W = DataFileEPTables[float](
         source_file_path=ep_table_results, loader=load_peak_electric_usage_data
     )
@@ -162,15 +184,15 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
 
     # -----------------------------------------------------------------------------------
     # -- Setup the Variant's Fuel Types and Costs
-    electricity = Fuel(
-        fuel_type=FuelType.ELECTRICITY,
+    electricity = PhAdorbFuel(
+        fuel_type=PhAdorbFuelType.ELECTRICITY,
         purchase_price=0.102,
         sale_price=0.6,
         annual_base_price=100.0,
         used=True,
     )
-    gas = Fuel(
-        fuel_type=FuelType.NATURAL_GAS,
+    gas = PhAdorbFuel(
+        fuel_type=PhAdorbFuelType.NATURAL_GAS,
         purchase_price=0.102,
         sale_price=0.0,
         annual_base_price=480.0,
@@ -180,7 +202,7 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
     # -----------------------------------------------------------------------------------
     # -- Create the actual Variant
     hb_model_properties: ModelReviveProperties = getattr(_hb_model.properties, "revive")
-    revive_variant = ReviveVariant(
+    revive_variant = PhAdorbVariant(
         name=_hb_model.display_name or "unnamed",
         ep_hourly_results_df=ep_hourly_results.data,
         ep_meter_results_df=ep_meter_results.data,
@@ -188,13 +210,13 @@ def convert_hb_model_to_ReviveVariant(_hb_model: Model) -> ReviveVariant:
         peak_electric_usage_W=peak_electric_usage_W.data,
         electricity=electricity,
         gas=gas,
-        grid_region=get_hb_model_GridRegion(hb_model_properties),
-        national_emissions=get_hb_model_NationalEmissions(hb_model_properties),
+        grid_region=get_PhAdorbGridRegion_from_hb_model(hb_model_properties),
+        national_emissions=get_PhAdorbNationalEmissions_from_hb_mode(hb_model_properties),
         analysis_duration=hb_model_properties.analysis_duration,
         envelope_labor_cost_fraction=hb_model_properties.envelope_labor_cost_fraction,
-        measure_collection=get_hb_model_CO2_measures(hb_model_properties),
-        construction_collection=get_hb_model_constructions(_hb_model, constructions_path, construction_quantities),
-        equipment_collection=get_hb_model_equipment(_hb_model, equipment_path),
+        measure_collection=get_PhAdorbCO2Measures_from_hb_model(hb_model_properties),
+        construction_collection=get_PhAdorbConstructions_from_hb_model(_hb_model),
+        equipment_collection=get_PhAdorbEquipment_from_hb_model(_hb_model, equipment_path),
     )
 
     return revive_variant

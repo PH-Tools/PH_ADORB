@@ -7,7 +7,7 @@ from pytest import approx
 from rich import print
 
 from ph_adorb.adorb_cost import calculate_variant_ADORB_costs
-from ph_adorb.constructions import ConstructionCollection, load_constructions_from_json_file
+from ph_adorb.constructions import PhAdorbConstructionCollection, load_constructions_from_json_file
 from ph_adorb.ep_csv_file import DataFileCSV, load_full_hourly_ep_output, load_monthly_meter_ep_output
 from ph_adorb.ep_html_file import (
     DataFileEPTables,
@@ -15,12 +15,17 @@ from ph_adorb.ep_html_file import (
     load_construction_quantities_data,
     load_peak_electric_usage_data,
 )
-from ph_adorb.equipment import Equipment, EquipmentCollection, EquipmentType, load_equipment_from_json_file
-from ph_adorb.fuel import Fuel, FuelType
+from ph_adorb.equipment import (
+    PhAdorbEquipment,
+    PhAdorbEquipmentCollection,
+    PhAdorbEquipmentType,
+    load_equipment_from_json_file,
+)
+from ph_adorb.fuel import PhAdorbFuel, PhAdorbFuelType
 from ph_adorb.grid_region import load_CO2_factors_from_json_file
-from ph_adorb.measures import CO2MeasureCollection, load_CO2_measures_from_json_file
+from ph_adorb.measures import PhAdorbCO2MeasureCollection, load_CO2_measures_from_json_file
 from ph_adorb.national_emissions import load_national_emissions_from_json_file
-from ph_adorb.variant import ReviveVariant
+from ph_adorb.variant import PhAdorbVariant
 
 
 def test_result_csv_file_values(_output_path: Path):
@@ -118,14 +123,14 @@ if __name__ == "__main__":
 
     # -- Variant Measures
     all_measures_from_database = load_CO2_measures_from_json_file(measures_path)
-    used_measures = CO2MeasureCollection()
+    used_measures = PhAdorbCO2MeasureCollection()
     used_measures.add_measure(all_measures_from_database["HP Replace 1"])
     used_measures.add_measure(all_measures_from_database["HP Replace 2"])
     used_measures.add_measure(all_measures_from_database["HP Replace 3"])
 
     # -- Variant Constructions
     all_constructions_from_database = load_constructions_from_json_file(constructions_path)
-    used_constructions = ConstructionCollection()
+    used_constructions = PhAdorbConstructionCollection()
     used_constructions.add_construction(all_constructions_from_database["Exterior Wall"])
     used_constructions.add_construction(all_constructions_from_database["Exterior Roof"])
     used_constructions.add_construction(all_constructions_from_database["Exterior Slab UnIns"])
@@ -137,7 +142,7 @@ if __name__ == "__main__":
 
     # -- Variant Equipment
     all_equipment_from_database = load_equipment_from_json_file(equipment_path)
-    used_equipment = EquipmentCollection()
+    used_equipment = PhAdorbEquipmentCollection()
     used_equipment.add_equipment(all_equipment_from_database["GasFurnaceDXAC"])
     used_equipment.add_equipment(all_equipment_from_database["GasBoiler"])
     used_equipment.add_equipment(all_equipment_from_database["Refrigerator [360]"])
@@ -149,18 +154,18 @@ if __name__ == "__main__":
 
     # TODO: How to handle PV and Batteries? How is Al doing it?
     used_equipment.add_equipment(
-        Equipment(
+        PhAdorbEquipment(
             name="PV Array",
-            equipment_type=EquipmentType.PV_ARRAY,
+            equipment_type=PhAdorbEquipmentType.PV_ARRAY,
             cost=5,
             lifetime_years=25,
             labor_fraction=0.25,
         )
     )
     used_equipment.add_equipment(
-        Equipment(
+        PhAdorbEquipment(
             name="Battery",
-            equipment_type=EquipmentType.BATTERY,
+            equipment_type=PhAdorbEquipmentType.BATTERY,
             cost=3_894.54,
             lifetime_years=10,
             labor_fraction=0.5,
@@ -169,15 +174,15 @@ if __name__ == "__main__":
 
     # -----------------------------------------------------------------------------------
     # -- Setup the Variant's Fuel Types and Costs
-    electricity = Fuel(
-        fuel_type=FuelType.ELECTRICITY,
+    electricity = PhAdorbFuel(
+        fuel_type=PhAdorbFuelType.ELECTRICITY,
         purchase_price=0.102,
         sale_price=0.6,
         annual_base_price=100.0,
         used=True,
     )
-    gas = Fuel(
-        fuel_type=FuelType.NATURAL_GAS,
+    gas = PhAdorbFuel(
+        fuel_type=PhAdorbFuelType.NATURAL_GAS,
         purchase_price=0.102,
         sale_price=0.0,
         annual_base_price=480.0,
@@ -186,7 +191,7 @@ if __name__ == "__main__":
 
     # -----------------------------------------------------------------------------------
     # -- Setup a Variant with all its required attributes
-    variant = ReviveVariant(
+    variant = PhAdorbVariant(
         name=variant_name,
         ep_hourly_results_df=ep_hourly_results.data,
         ep_meter_results_df=ep_meter_results.data,

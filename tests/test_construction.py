@@ -4,25 +4,23 @@ from pathlib import Path
 from pytest import approx
 
 from ph_adorb.constructions import (
-    Construction,
-    ConstructionCollection,
-    ConstructionType,
+    PhAdorbConstruction,
+    PhAdorbConstructionCollection,
     load_constructions_from_json_file,
     write_constructions_to_json_file,
 )
 
 
 def test_basic_construction():
-    construction = Construction(
-        name="Test Construction",
-        construction_type=ConstructionType.EXTERIOR_WALL,
+    construction = PhAdorbConstruction(
+        display_name="Test Construction",
+        identifier="Test Construction",
         CO2_kg_per_m2=100,
         cost_per_m2=1000,
         lifetime_years=30,
         labor_fraction=0.4,
     )
-    assert construction.name == "Test Construction"
-    assert construction.construction_type == ConstructionType.EXTERIOR_WALL
+    assert construction.display_name == "Test Construction"
     assert construction.CO2_kg_per_m2 == 100
     assert construction.cost_per_m2 == 1000
     assert construction.lifetime_years == 30
@@ -31,49 +29,49 @@ def test_basic_construction():
 
 
 def test_set_quantity_ft2():
-    construction = Construction(
-        name="Test Construction",
-        construction_type=ConstructionType.EXTERIOR_WALL,
+    construction = PhAdorbConstruction(
+        display_name="Test Construction",
+        identifier="Test Construction",
         CO2_kg_per_m2=100,
         cost_per_m2=1000,
         lifetime_years=30,
         labor_fraction=0.4,
     )
     construction.set_quantity_ft2(1076.39)
-    assert construction.quantity_m2 == approx(100.0)
+    assert construction.area_m2 == approx(100.0)
     assert construction.quantity_ft2 == approx(1076.39)
 
 
 def test_cost():
-    construction = Construction(
-        name="Test Construction",
-        construction_type=ConstructionType.EXTERIOR_WALL,
+    construction = PhAdorbConstruction(
+        display_name="Test Construction",
+        identifier="Test Construction",
         CO2_kg_per_m2=100,
         cost_per_m2=1000,
         lifetime_years=30,
         labor_fraction=0.4,
     )
-    construction.quantity_m2 = 100
+    construction.area_m2 = 100
     assert construction.cost == approx(100000.0)
 
 
 def test_CO2_kg():
-    construction = Construction(
-        name="Test Construction",
-        construction_type=ConstructionType.EXTERIOR_WALL,
+    construction = PhAdorbConstruction(
+        display_name="Test Construction",
+        identifier="Test Construction",
         CO2_kg_per_m2=100,
         cost_per_m2=1000,
         lifetime_years=30,
         labor_fraction=0.4,
     )
-    construction.quantity_m2 = 100
+    construction.area_m2 = 100
     assert construction.CO2_kg == approx(10000.0)
 
 
 def test_construction_to_json():
-    construction = Construction(
-        name="Test Construction",
-        construction_type=ConstructionType.EXTERIOR_WALL,
+    construction = PhAdorbConstruction(
+        display_name="Test Construction",
+        identifier="Test Construction",
         CO2_kg_per_m2=100,
         cost_per_m2=1000,
         lifetime_years=30,
@@ -82,23 +80,23 @@ def test_construction_to_json():
     json_str = construction.json()
     assert (
         json_str
-        == '{"name": "Test Construction", "construction_type": "Exterior Wall", "CO2_kg_per_m2": 100.0, "cost_per_m2": 1000.0, "lifetime_years": 30, "labor_fraction": 0.4, "quantity_m2": 0.0}'
+        == '{"display_name": "Test Construction", "identifier": "Test Construction", "CO2_kg_per_m2": 100.0, "cost_per_m2": 1000.0, "lifetime_years": 30, "labor_fraction": 0.4, "area_m2": 0.0}'
     )
 
 
 def test_construction_from_json():
-    construction = Construction.parse_obj(
+    construction = PhAdorbConstruction.parse_obj(
         {
-            "name": "Test Construction",
-            "construction_type": "Exterior Wall",
+            "display_name": "Test Construction",
+            "identifier": "Test Construction",
             "CO2_kg_per_m2": 100,
             "cost_per_m2": 1000,
             "lifetime_years": 30,
             "labor_fraction": 0.4,
         }
     )
-    assert construction.name == "Test Construction"
-    assert construction.construction_type == ConstructionType.EXTERIOR_WALL
+    assert construction.display_name == "Test Construction"
+    assert construction.identifier == "Test Construction"
     assert construction.CO2_kg_per_m2 == 100
     assert construction.cost_per_m2 == 1000
     assert construction.lifetime_years == 30
@@ -107,9 +105,9 @@ def test_construction_from_json():
 
 
 def test_duplicate_construction():
-    construction = Construction(
-        name="Test Construction",
-        construction_type=ConstructionType.EXTERIOR_WALL,
+    construction = PhAdorbConstruction(
+        display_name="Test Construction",
+        identifier="Test Construction",
         CO2_kg_per_m2=100,
         cost_per_m2=1000,
         lifetime_years=30,
@@ -126,18 +124,18 @@ def test_duplicate_construction():
 
 
 def test_construction_collection():
-    collection = ConstructionCollection()
-    construction1 = Construction(
-        name="Test Construction 1",
-        construction_type=ConstructionType.EXTERIOR_WALL,
+    collection = PhAdorbConstructionCollection()
+    construction1 = PhAdorbConstruction(
+        display_name="Test Construction 1",
+        identifier="Test Construction 1",
         CO2_kg_per_m2=100,
         cost_per_m2=1000,
         lifetime_years=30,
         labor_fraction=0.4,
     )
-    construction2 = Construction(
-        name="Test Construction 2",
-        construction_type=ConstructionType.EXTERIOR_WALL,
+    construction2 = PhAdorbConstruction(
+        display_name="Test Construction 2",
+        identifier="Test Construction 1",
         CO2_kg_per_m2=200,
         cost_per_m2=2000,
         lifetime_years=40,
@@ -165,22 +163,22 @@ def test_construction_collection():
 
     # Test iteration
     for construction in collection:
-        assert isinstance(construction, Construction)
+        assert isinstance(construction, PhAdorbConstruction)
 
 
 def test_set_construction_f2_quantities():
-    collection = ConstructionCollection()
-    construction1 = Construction(
-        name="Test Construction 1",
-        construction_type=ConstructionType.EXTERIOR_WALL,
+    collection = PhAdorbConstructionCollection()
+    construction1 = PhAdorbConstruction(
+        display_name="Test Construction 1",
+        identifier="Test Construction 1",
         CO2_kg_per_m2=100,
         cost_per_m2=1000,
         lifetime_years=30,
         labor_fraction=0.4,
     )
-    construction2 = Construction(
-        name="Test Construction 2",
-        construction_type=ConstructionType.EXTERIOR_WALL,
+    construction2 = PhAdorbConstruction(
+        display_name="Test Construction 2",
+        identifier="Test Construction 1",
         CO2_kg_per_m2=200,
         cost_per_m2=2000,
         lifetime_years=40,
@@ -191,23 +189,23 @@ def test_set_construction_f2_quantities():
 
     quantities = {"TEST CONSTRUCTION 1": 1076.39, "TesT construction 2": 1076.39}
     collection.set_constructions_ft2_quantities(quantities)
-    assert collection.get_construction("Test Construction 1").quantity_m2 == approx(100.0)
-    assert collection.get_construction("Test Construction 2").quantity_m2 == approx(100.0)
+    assert collection.get_construction("Test Construction 1").area_m2 == approx(100.0)
+    assert collection.get_construction("Test Construction 2").area_m2 == approx(100.0)
 
 
 def test_constructions_json_file():
     # -- Create a temp JSON file with some constructions
-    c1 = Construction(
-        name="Test Construction 1",
-        construction_type=ConstructionType.EXTERIOR_WALL,
+    c1 = PhAdorbConstruction(
+        display_name="Test Construction 1",
+        identifier="Test Construction 1",
         CO2_kg_per_m2=100,
         cost_per_m2=1000,
         lifetime_years=30,
         labor_fraction=0.4,
     )
-    c2 = Construction(
-        name="Test Construction 2",
-        construction_type=ConstructionType.EXTERIOR_WALL,
+    c2 = PhAdorbConstruction(
+        display_name="Test Construction 2",
+        identifier="Test Construction 1",
         CO2_kg_per_m2=200,
         cost_per_m2=2000,
         lifetime_years=40,
@@ -216,7 +214,7 @@ def test_constructions_json_file():
     constructions = [c1, c2]
 
     file_path = Path("temp.json")
-    write_constructions_to_json_file(file_path, {_.name: _ for _ in constructions})
+    write_constructions_to_json_file(file_path, {_.display_name: _ for _ in constructions})
 
     # -- Read the JSON file back in
     constructions2 = load_constructions_from_json_file(file_path)

@@ -77,7 +77,7 @@ if __name__ == "__main__":
     print(f"\t>> HB Model '{hb_model.display_name}' successfully re-built.")
 
     # --- Generate the Revive Variant.
-    revive_variant = create_variant.convert_hb_model_to_ReviveVariant(hb_model)
+    revive_variant = create_variant.get_PhAdorbVariant_from_hb_model(hb_model)
 
     # --- Get the ADORB Costs as a Pandas DataFrame
     # -------------------------------------------------------------------------

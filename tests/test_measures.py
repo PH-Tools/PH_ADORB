@@ -1,16 +1,16 @@
 from pathlib import Path
 
 from ph_adorb.measures import (
-    CO2MeasureCollection,
+    PhAdorbCO2MeasureCollection,
     CO2MeasureType,
-    CO2ReductionMeasure,
+    PhAdorbCO2ReductionMeasure,
     load_CO2_measures_from_json_file,
     write_CO2_measures_to_json_file,
 )
 
 
 def test_basic_CO2ReductionMeasure():
-    measure = CO2ReductionMeasure(
+    measure = PhAdorbCO2ReductionMeasure(
         measure_type=CO2MeasureType.PERFORMANCE,
         name="Test Measure",
         year=2023,
@@ -29,7 +29,7 @@ def test_basic_CO2ReductionMeasure():
 
 
 def test_CO2ReductionMeasure_to_json():
-    measure = CO2ReductionMeasure(
+    measure = PhAdorbCO2ReductionMeasure(
         measure_type=CO2MeasureType.PERFORMANCE,
         name="Test Measure",
         year=2023,
@@ -46,7 +46,7 @@ def test_CO2ReductionMeasure_to_json():
 
 
 def test_CO2ReductionMeasure_from_json():
-    measure = CO2ReductionMeasure.parse_obj(
+    measure = PhAdorbCO2ReductionMeasure.parse_obj(
         {
             "measure_type": "PERFORMANCE",
             "name": "Test Measure",
@@ -68,8 +68,8 @@ def test_CO2ReductionMeasure_from_json():
 
 
 def test_CO2ReductionMeasureCollection():
-    collection = CO2MeasureCollection()
-    measure1 = CO2ReductionMeasure(
+    collection = PhAdorbCO2MeasureCollection()
+    measure1 = PhAdorbCO2ReductionMeasure(
         measure_type=CO2MeasureType.PERFORMANCE,
         name="Test Measure 1",
         year=2023,
@@ -78,7 +78,7 @@ def test_CO2ReductionMeasureCollection():
         country_name="DE",
         labor_fraction=0.5,
     )
-    measure2 = CO2ReductionMeasure(
+    measure2 = PhAdorbCO2ReductionMeasure(
         measure_type=CO2MeasureType.PERFORMANCE,
         name="Test Measure 2",
         year=2024,
@@ -107,8 +107,8 @@ def test_CO2ReductionMeasureCollection():
 
 
 def test_CO2ReductionMeasureCollection_PERFORMANCE():
-    collection = CO2MeasureCollection()
-    measure1 = CO2ReductionMeasure(
+    collection = PhAdorbCO2MeasureCollection()
+    measure1 = PhAdorbCO2ReductionMeasure(
         measure_type=CO2MeasureType.PERFORMANCE,
         name="Test Measure 1",
         year=2023,
@@ -117,7 +117,7 @@ def test_CO2ReductionMeasureCollection_PERFORMANCE():
         country_name="DE",
         labor_fraction=0.5,
     )
-    measure2 = CO2ReductionMeasure(
+    measure2 = PhAdorbCO2ReductionMeasure(
         measure_type=CO2MeasureType.PERFORMANCE,
         name="Test Measure 2",
         year=2024,
@@ -126,7 +126,7 @@ def test_CO2ReductionMeasureCollection_PERFORMANCE():
         country_name="DE",
         labor_fraction=0.6,
     )
-    measure3 = CO2ReductionMeasure(
+    measure3 = PhAdorbCO2ReductionMeasure(
         measure_type=CO2MeasureType.NON_PERFORMANCE,
         name="Test Measure 3",
         year=2024,
@@ -145,8 +145,8 @@ def test_CO2ReductionMeasureCollection_PERFORMANCE():
 
 
 def test_CO2ReductionMeasures_json_file():
-    collection = CO2MeasureCollection()
-    measure1 = CO2ReductionMeasure(
+    collection = PhAdorbCO2MeasureCollection()
+    measure1 = PhAdorbCO2ReductionMeasure(
         measure_type=CO2MeasureType.PERFORMANCE,
         name="Test Measure 1",
         year=2023,
@@ -155,7 +155,7 @@ def test_CO2ReductionMeasures_json_file():
         country_name="DE",
         labor_fraction=0.5,
     )
-    measure2 = CO2ReductionMeasure(
+    measure2 = PhAdorbCO2ReductionMeasure(
         measure_type=CO2MeasureType.PERFORMANCE,
         name="Test Measure 2",
         year=2024,

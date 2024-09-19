@@ -8,17 +8,17 @@ from collections import namedtuple
 import pandas as pd
 from pydantic import BaseModel, Field
 
-from ph_adorb.constructions import ConstructionCollection
-from ph_adorb.equipment import EquipmentCollection
-from ph_adorb.fuel import Fuel
-from ph_adorb.grid_region import GridRegion
-from ph_adorb.measures import CO2MeasureCollection
-from ph_adorb.national_emissions import NationalEmissions
+from ph_adorb.constructions import PhAdorbConstructionCollection
+from ph_adorb.equipment import PhAdorbEquipmentCollection
+from ph_adorb.fuel import PhAdorbFuel
+from ph_adorb.grid_region import PhAdorbGridRegion
+from ph_adorb.measures import PhAdorbCO2MeasureCollection
+from ph_adorb.national_emissions import PhAdorbNationalEmissions
 
 YearlyCost = namedtuple("YearlyCost", ["cost", "year"])
 
 
-class ReviveVariant(BaseModel):
+class PhAdorbVariant(BaseModel):
     """A single Variant of a building design."""
 
     name: str
@@ -26,32 +26,32 @@ class ReviveVariant(BaseModel):
     ep_meter_results_df: pd.DataFrame
     construction_cost_estimate: list
     peak_electric_usage_W: float
-    electricity: Fuel
-    gas: Fuel
-    grid_region: GridRegion
-    national_emissions: NationalEmissions
+    electricity: PhAdorbFuel
+    gas: PhAdorbFuel
+    grid_region: PhAdorbGridRegion
+    national_emissions: PhAdorbNationalEmissions
     analysis_duration: int
     envelope_labor_cost_fraction: float
 
-    measure_collection: CO2MeasureCollection = Field(default_factory=CO2MeasureCollection)
-    construction_collection: ConstructionCollection = Field(default_factory=ConstructionCollection)
-    equipment_collection: EquipmentCollection = Field(default_factory=EquipmentCollection)
+    measure_collection: PhAdorbCO2MeasureCollection = Field(default_factory=PhAdorbCO2MeasureCollection)
+    construction_collection: PhAdorbConstructionCollection = Field(default_factory=PhAdorbConstructionCollection)
+    equipment_collection: PhAdorbEquipmentCollection = Field(default_factory=PhAdorbEquipmentCollection)
 
     class Config:
         arbitrary_types_allowed = True
 
     @property
-    def all_carbon_measures(self) -> CO2MeasureCollection:
+    def all_carbon_measures(self) -> PhAdorbCO2MeasureCollection:
         """Return a collection of all the Carbon Measures."""
         return self.measure_collection
 
     @property
-    def performance_measure_collection(self) -> CO2MeasureCollection:
+    def performance_measure_collection(self) -> PhAdorbCO2MeasureCollection:
         """Return a collection of only the Performance Carbon Measures."""
         return self.measure_collection.performance_measures
 
     @property
-    def nonperformance_carbon_measures(self) -> CO2MeasureCollection:
+    def nonperformance_carbon_measures(self) -> PhAdorbCO2MeasureCollection:
         """Return a collection of only the Non-Performance Carbon Measures."""
         return self.measure_collection.nonperformance_measures
 
@@ -83,7 +83,7 @@ def get_annual_electric_cost(
     return total_annual_electric_cost
 
 
-def get_hourly_electric_CO2(_hourly: pd.DataFrame, _grid_region_factors: GridRegion) -> list[float]:
+def get_hourly_electric_CO2(_hourly: pd.DataFrame, _grid_region_factors: PhAdorbGridRegion) -> list[float]:
     """Return a list of total annual CO2 emissions for each year from 2023 - 2011 (89 years)."""
 
     PURCHASED_ELEC_FIELD_NAME = "Whole Building:Facility Total Purchased Electricity Energy [J](Hourly)"
@@ -134,7 +134,7 @@ def get_annual_gas_CO2(
 
 def get_carbon_measures_cost(
     _construction_cost_est_table: list[list[list[str | float]]],
-    _variant_CO2_measures: CO2MeasureCollection,
+    _variant_CO2_measures: PhAdorbCO2MeasureCollection,
 ) -> tuple[list[YearlyCost], YearlyCost]:
     """Return the total annual cost of all the Carbon Measures, and the first cost."""
 
@@ -155,7 +155,7 @@ def get_carbon_measures_cost(
 
 
 def get_carbon_measures_embodied_CO2(
-    _variant_CO2_measures: CO2MeasureCollection,
+    _variant_CO2_measures: PhAdorbCO2MeasureCollection,
     _kg_CO2_per_USD: float,
 ) -> list[YearlyCost]:
     """Return the total annual embodied CO2 cost of all the Carbon Measures."""

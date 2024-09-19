@@ -8,13 +8,13 @@ from enum import Enum
 from pydantic import BaseModel
 
 
-class FuelType(str, Enum):
+class PhAdorbFuelType(str, Enum):
     ELECTRICITY = "Electricity"
     NATURAL_GAS = "Natural Gas"
 
 
-class Fuel(BaseModel):
-    fuel_type: FuelType
+class PhAdorbFuel(BaseModel):
+    fuel_type: PhAdorbFuelType
     purchase_price: float
     sale_price: float
     annual_base_price: float
