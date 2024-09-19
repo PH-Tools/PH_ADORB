@@ -8,6 +8,7 @@ from collections import defaultdict
 
 from honeybee.model import Model
 from honeybee_energy.construction.opaque import OpaqueConstruction
+from honeybee_energy.construction.window import WindowConstruction
 from honeybee_energy.properties.model import ModelEnergyProperties
 
 from honeybee_revive.properties.model import ModelReviveProperties
@@ -33,7 +34,6 @@ from ph_adorb.national_emissions import PhAdorbNationalEmissions
 from ph_adorb.variant import PhAdorbVariant
 from ph_adorb.constructions import PhAdorbConstruction
 
-# TODO: Create the Variant from the HBJSON file data....
 
 # TODO: Add error / warning messages if GridRegion and NationalEmissions are not set in the HB-Model.
 
@@ -75,7 +75,7 @@ def get_PhAdorbCO2Measures_from_hb_model(_hb_model_prop: ModelReviveProperties) 
     return measure_collection_
 
 
-def convert_hb_construction(_hb_construction: OpaqueConstruction) -> PhAdorbConstruction:
+def convert_hb_construction(_hb_construction: OpaqueConstruction | WindowConstruction) -> PhAdorbConstruction:
     """Convert a Honeybee Opaque Construction to a Phius ADORB Construction."""
     hb_const_prop: OpaqueConstructionReviveProperties = getattr(_hb_construction.properties, "revive")
     return PhAdorbConstruction(
