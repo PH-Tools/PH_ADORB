@@ -28,4 +28,4 @@ For questions about PH-ADORB, feel free to reach out at: PH_Tools@bldgtyp.com
 
 ### This library is for research and testing purposes only.
 
-![Tests](https://github.com/PH-Tools/honeybee_revive/actions/workflows/ci.yaml/badge.svg)
+![Tests](https://github.com/PH-Tools/ph_adorb/actions/workflows/ci.yaml/badge.svg)
