@@ -50,8 +50,8 @@ class PhAdorbEquipmentCollection(BaseModel):
 
     _equipment: dict[str, PhAdorbEquipment] = PrivateAttr(default_factory=dict)
 
-    def add_equipment(self, factor: PhAdorbEquipment) -> None:
-        self._equipment[factor.name] = factor
+    def add_equipment(self, _ph_adorb_equipment: PhAdorbEquipment) -> None:
+        self._equipment[_ph_adorb_equipment.name] = _ph_adorb_equipment
 
     def get_equipment(self, key: str) -> PhAdorbEquipment:
         return self._equipment[key]

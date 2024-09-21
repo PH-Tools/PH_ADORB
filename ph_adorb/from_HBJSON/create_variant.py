@@ -10,9 +10,12 @@ from honeybee.model import Model
 from honeybee_energy.construction.opaque import OpaqueConstruction
 from honeybee_energy.construction.window import WindowConstruction
 from honeybee_energy.properties.model import ModelEnergyProperties
+from honeybee_energy.properties.room import RoomEnergyProperties
+from honeybee_energy.load.process import Process
 
 from honeybee_revive.properties.model import ModelReviveProperties
 from honeybee_energy_revive.properties.construction.opaque import OpaqueConstructionReviveProperties
+from honeybee_energy_revive.properties.load.process import ProcessReviveProperties
 
 from ph_adorb.constructions import PhAdorbConstructionCollection
 from ph_adorb.ep_csv_file import DataFileCSV, load_full_hourly_ep_output, load_monthly_meter_ep_output
@@ -102,23 +105,41 @@ def get_PhAdorbConstructions_from_hb_model(_hb_model: Model) -> PhAdorbConstruct
     return construction_collection
 
 
-def get_PhAdorbEquipment_from_hb_model(_hb_model: Model, equipment_path) -> PhAdorbEquipmentCollection:
+def convert_hb_process_load(process_load: Process) -> PhAdorbEquipment:
+    """Convert a Honeybee ProcessLoad to a Phius ADORB Appliance Equipment."""
+    process_prop: ProcessReviveProperties = getattr(process_load.properties, "revive")
+    return PhAdorbEquipment(
+        name=process_load.display_name,
+        equipment_type=PhAdorbEquipmentType.APPLIANCE,
+        cost=process_prop.cost,
+        lifetime_years=process_prop.lifetime_years,
+        labor_fraction=process_prop.labor_fraction,
+    )
 
+
+def get_PhAdorbEquipment_from_hb_model(_hb_model: Model, equipment_path) -> PhAdorbEquipmentCollection:
+    """Return a EquipmentCollection with all of the Equipment (Appliances) from the HB-Model."""
     # TODO: Refactor this to get equipment from the HB-Model
 
+    equipment_collection = PhAdorbEquipmentCollection()
+    # -- Add all of the Appliances from all of the HB-Rooms
+    for room in _hb_model.rooms:
+        room_prop: RoomEnergyProperties = getattr(room.properties, "energy")
+        for process_load in room_prop.process_loads:
+            equipment_collection.add_equipment(convert_hb_process_load(process_load))
+
+    # TODO: Remove all of this database part....
+
     all_equipment_from_database = load_equipment_from_json_file(equipment_path)
-    used_equipment = PhAdorbEquipmentCollection()
-    used_equipment.add_equipment(all_equipment_from_database["GasFurnaceDXAC"])
-    used_equipment.add_equipment(all_equipment_from_database["GasBoiler"])
-    used_equipment.add_equipment(all_equipment_from_database["Refrigerator [360]"])
-    used_equipment.add_equipment(all_equipment_from_database["Clothes Wash [160]"])
-    used_equipment.add_equipment(all_equipment_from_database["Clothes Dryer"])
-    used_equipment.add_equipment(all_equipment_from_database["Cooktop"])
-    used_equipment.add_equipment(all_equipment_from_database["Dishwasher [360]"])
-    used_equipment.add_equipment(all_equipment_from_database["Lights [60]"])
+    # TODO: Handle Lighting
+    equipment_collection.add_equipment(all_equipment_from_database["Lights [60]"])
+
+    # TODO: How to handle HVAC Equipment?
+    equipment_collection.add_equipment(all_equipment_from_database["GasFurnaceDXAC"])
+    equipment_collection.add_equipment(all_equipment_from_database["GasBoiler"])
 
     # TODO: How to handle PV and Batteries? How is Al doing it?
-    used_equipment.add_equipment(
+    equipment_collection.add_equipment(
         PhAdorbEquipment(
             name="PV Array",
             equipment_type=PhAdorbEquipmentType.PV_ARRAY,
@@ -127,7 +148,7 @@ def get_PhAdorbEquipment_from_hb_model(_hb_model: Model, equipment_path) -> PhAd
             labor_fraction=0.25,
         )
     )
-    used_equipment.add_equipment(
+    equipment_collection.add_equipment(
         PhAdorbEquipment(
             name="Battery",
             equipment_type=PhAdorbEquipmentType.BATTERY,
@@ -136,7 +157,8 @@ def get_PhAdorbEquipment_from_hb_model(_hb_model: Model, equipment_path) -> PhAd
             labor_fraction=0.5,
         )
     )
-    return used_equipment
+
+    return equipment_collection
 
 
 def get_PhAdorbVariant_from_hb_model(_hb_model: Model) -> PhAdorbVariant:
