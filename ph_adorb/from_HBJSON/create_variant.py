@@ -111,7 +111,7 @@ def get_PhAdorbConstructions_from_hb_model(_hb_model: Model) -> PhAdorbConstruct
 
 
 def convert_hb_process_load(process_load: Process) -> PhAdorbEquipment:
-    """Convert a Honeybee ProcessLoad to a Phius ADORB Appliance Equipment."""
+    """Convert a Honeybee Process-Load to a Phius ADORB Appliance Equipment."""
     process_prop: ProcessReviveProperties = getattr(process_load.properties, "revive")
     return PhAdorbEquipment(
         name=process_load.display_name,
@@ -123,6 +123,7 @@ def convert_hb_process_load(process_load: Process) -> PhAdorbEquipment:
 
 
 def convert_hbe_lighting(_hb_lighting: Lighting) -> PhAdorbEquipment:
+    """Convert a Honeybee-Energy Lighting to a Phius ADORB Lighting Equipment."""
     lighting_prop: LightingReviveProperties = getattr(_hb_lighting.properties, "revive")
     return PhAdorbEquipment(
         name=_hb_lighting.display_name,
@@ -134,6 +135,7 @@ def convert_hbe_lighting(_hb_lighting: Lighting) -> PhAdorbEquipment:
 
 
 def convert_hb_shade_pv(_hb_pv: PVProperties) -> PhAdorbEquipment:
+    """Convert a Honeybee-Energy PVProperties to a Phius ADORB PV Equipment."""
     pv_prop_revive: PVPropertiesReviveProperties = getattr(_hb_pv.properties, "revive")
     return PhAdorbEquipment(
         name=_hb_pv.display_name,
