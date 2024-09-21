@@ -12,10 +12,13 @@ from honeybee_energy.construction.window import WindowConstruction
 from honeybee_energy.properties.model import ModelEnergyProperties
 from honeybee_energy.properties.room import RoomEnergyProperties
 from honeybee_energy.load.process import Process
+from honeybee_energy.load.lighting import Lighting
 
 from honeybee_revive.properties.model import ModelReviveProperties
 from honeybee_energy_revive.properties.construction.opaque import OpaqueConstructionReviveProperties
 from honeybee_energy_revive.properties.load.process import ProcessReviveProperties
+from honeybee_energy_revive.properties.load.lighting import LightingReviveProperties
+
 
 from ph_adorb.constructions import PhAdorbConstructionCollection
 from ph_adorb.ep_csv_file import DataFileCSV, load_full_hourly_ep_output, load_monthly_meter_ep_output
@@ -117,22 +120,34 @@ def convert_hb_process_load(process_load: Process) -> PhAdorbEquipment:
     )
 
 
+def convert_hbe_lighting(_hb_lighting: Lighting) -> PhAdorbEquipment:
+    lighting_prop: LightingReviveProperties = getattr(_hb_lighting.properties, "revive")
+    return PhAdorbEquipment(
+        name=_hb_lighting.display_name,
+        equipment_type=PhAdorbEquipmentType.LIGHTS,
+        cost=lighting_prop.cost,
+        lifetime_years=lighting_prop.lifetime_years,
+        labor_fraction=lighting_prop.labor_fraction,
+    )
+
+
 def get_PhAdorbEquipment_from_hb_model(_hb_model: Model, equipment_path) -> PhAdorbEquipmentCollection:
     """Return a EquipmentCollection with all of the Equipment (Appliances) from the HB-Model."""
     # TODO: Refactor this to get equipment from the HB-Model
 
     equipment_collection = PhAdorbEquipmentCollection()
+
     # -- Add all of the Appliances from all of the HB-Rooms
     for room in _hb_model.rooms:
         room_prop: RoomEnergyProperties = getattr(room.properties, "energy")
         for process_load in room_prop.process_loads:
             equipment_collection.add_equipment(convert_hb_process_load(process_load))
 
+        equipment_collection.add_equipment(convert_hbe_lighting(room_prop.lighting))
+
     # TODO: Remove all of this database part....
 
     all_equipment_from_database = load_equipment_from_json_file(equipment_path)
-    # TODO: Handle Lighting
-    equipment_collection.add_equipment(all_equipment_from_database["Lights [60]"])
 
     # TODO: How to handle HVAC Equipment?
     equipment_collection.add_equipment(all_equipment_from_database["GasFurnaceDXAC"])
