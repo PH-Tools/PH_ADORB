@@ -12,7 +12,7 @@ import os
 import sys
 from pathlib import Path
 
-from ph_adorb.adorb_cost import calculate_variant_ADORB_costs
+from ph_adorb.variant import calc_variant_ADORB_costs
 from ph_adorb.from_HBJSON import create_variant, read_HBJSON_file
 
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     # --- Get the ADORB Costs as a Pandas DataFrame
     # -------------------------------------------------------------------------
-    variant_ADORB_df = calculate_variant_ADORB_costs(revive_variant)
+    variant_ADORB_df = calc_variant_ADORB_costs(revive_variant)
 
     # --- Output the ADORB Costs to a CSV File
     # -------------------------------------------------------------------------

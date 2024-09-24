@@ -32,9 +32,10 @@ class PhAdorbVariant(BaseModel):
     """A single Variant of a building design."""
 
     name: str
-    ep_hourly_results_df: pd.DataFrame
     ep_meter_results_df: pd.DataFrame
-    construction_cost_estimate: list
+    hourly_purchased_electricity_kwh: list[float]
+    total_purchased_electricity_kwh: float
+    total_sold_electricity_kwh: float
     peak_electric_usage_W: float
     electricity: PhAdorbFuel
     gas: PhAdorbFuel
@@ -72,37 +73,28 @@ class PhAdorbVariant(BaseModel):
 
 
 def calc_annual_total_electric_cost(
-    _ep_hourly_results_df: pd.DataFrame,
+    _purchased_electricity_kwh: float,
+    _sold_electricity_kwh: float,
     _electric_purchase_price: float,
     _electric_sell_price: float,
     _electric_annual_base_price: float,
 ) -> float:
     """Return the total annual electricity cost for the building."""
 
-    KWH_PER_JOULE = 0.0000002778
-    PURCHASED_ELEC_FIELD_NAME = "Whole Building:Facility Total Purchased Electricity Energy [J](Hourly)"
-    SOLD_ELEC_FIELD_NAME = "Whole Building:Facility Total Surplus Electricity Energy [J](Hourly)"
-
-    total_purchased_electric_J: float = _ep_hourly_results_df[PURCHASED_ELEC_FIELD_NAME].sum()
-    total_purchased_electric_KWH = total_purchased_electric_J * KWH_PER_JOULE
-    total_purchased_electric_cost = total_purchased_electric_KWH * _electric_purchase_price
-
-    total_sold_electric_J: float = _ep_hourly_results_df[SOLD_ELEC_FIELD_NAME].sum()
-    total_sold_electric_KWH = total_sold_electric_J * KWH_PER_JOULE
-    total_sold_electric_cost = total_sold_electric_KWH * _electric_sell_price
-
+    total_purchased_electric_cost = _purchased_electricity_kwh * _electric_purchase_price
+    total_sold_electric_cost = _sold_electricity_kwh * _electric_sell_price
     total_annual_electric_cost = total_purchased_electric_cost - total_sold_electric_cost + _electric_annual_base_price
     return total_annual_electric_cost
 
 
-def calc_annuals_hourly_electric_CO2(_hourly: pd.DataFrame, _grid_region_factors: PhAdorbGridRegion) -> list[float]:
+def calc_annuals_hourly_electric_CO2(
+    _hourly_purchased_electricity_kwh: list[float], _grid_region_factors: PhAdorbGridRegion
+) -> list[float]:
     """Return a list of total annual CO2 emissions for each year from 2023 - 2011 (89 years)."""
+    MWH_PER_KWH = 0.001
 
-    PURCHASED_ELEC_FIELD_NAME = "Whole Building:Facility Total Purchased Electricity Energy [J](Hourly)"
-    MWH_PER_JOULE = 0.0000000002778
-
-    # 8760 values (from the hourly simulation)....
-    hourly_electric_MWH: pd.Series[float] = _hourly[PURCHASED_ELEC_FIELD_NAME] * MWH_PER_JOULE
+    # -- Convert the hourly purchased electricity from KWH to a pd.Series as MWH
+    hourly_electric_MWH = pd.Series(_hourly_purchased_electricity_kwh) * MWH_PER_KWH
 
     # Multiply each year's factors by the hourly electric MWH list, and sum the results for each year.
     total_annual_CO2: list[float] = (
@@ -302,13 +294,14 @@ def calc_variant_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path
     # -----------------------------------------------------------------------------------
     # -- Electric: Annual Costs, Annual CO2
     annual_total_cost_electric = calc_annual_total_electric_cost(
-        _variant.ep_hourly_results_df,
+        _variant.total_purchased_electricity_kwh,
+        _variant.total_sold_electricity_kwh,
         _variant.electricity.purchase_price,
         _variant.electricity.sale_price,
-        _variant.gas.annual_base_price,
+        _variant.electricity.annual_base_price,
     )
     annual_hourly_CO2_electric = calc_annuals_hourly_electric_CO2(
-        _variant.ep_hourly_results_df,
+        _variant.hourly_purchased_electricity_kwh,
         _variant.grid_region,
     )
 

@@ -18,10 +18,10 @@ def test_pv_direct_energy_cost():
 
 
 def test_pv_operation_carbon_cost():
-    assert pv_operation_carbon_cost(0, [0, 1, 2, 3], 0) == 0
-    assert pv_operation_carbon_cost(1, [0, 1, 2, 3], 1) == approx(0.46511627906976744)
-    assert pv_operation_carbon_cost(-1, [0, 1, 2, 3], 1) == approx(1.075)
-    assert pv_operation_carbon_cost(1, [0, 1, 2, 3], 0, _discount_rate=-1) == 0
+    assert pv_operation_carbon_cost(0, [0, 1, 2, 3], 0, 0.25) == 0
+    assert pv_operation_carbon_cost(1, [0, 1, 2, 3], 1, 0.25) == approx(0.46511627906976744)
+    assert pv_operation_carbon_cost(-1, [0, 1, 2, 3], 1, 0.25) == approx(1.075)
+    assert pv_operation_carbon_cost(1, [0, 1, 2, 3], 0, 0.25, _discount_rate=-1) == 0
 
 
 def test_pv_direct_maintenance_cost():

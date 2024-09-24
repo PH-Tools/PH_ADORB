@@ -45,8 +45,8 @@ AnyHvacSystemReviveProperties = Union[
 ]
 
 from ph_adorb.constructions import PhAdorbConstruction, PhAdorbConstructionCollection
-from ph_adorb.ep_csv_file import DataFileCSV, load_full_hourly_ep_output, load_monthly_meter_ep_output
-from ph_adorb.ep_html_file import DataFileEPTables, load_construction_cost_estimate_data, load_peak_electric_usage_data
+from ph_adorb.ep_csv_file import DataFileCSV, load_monthly_meter_ep_output
+from ph_adorb.ep_sql_file import DataFileSQL
 from ph_adorb.equipment import PhAdorbEquipment, PhAdorbEquipmentCollection, PhAdorbEquipmentType
 from ph_adorb.fuel import PhAdorbFuel, PhAdorbFuelType
 from ph_adorb.grid_region import PhAdorbGridRegion, load_CO2_factors_from_json_file
@@ -229,29 +229,17 @@ def get_PhAdorbVariant_from_hb_model(_hb_model: Model) -> PhAdorbVariant:
     # -----------------------------------------------------------------------------------
     # -- Input File Paths
     input_dir_path = Path("/Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/tests/_test_input")
-    ep_full_hourly_results_csv = input_dir_path / "example_full_hourly.csv"
+    ep_full_hourly_results_sql = input_dir_path / "example_full_hourly.sql"
     ep_monthly_meter_results_csv = input_dir_path / "example_monthly_meter.csv"
-    ep_table_results = input_dir_path / "example_annual_tables.htm"
 
     # -----------------------------------------------------------------------------------
     # -- Load the EnergyPlus Simulation Result CSV Data
-    ep_hourly_results = DataFileCSV(source_file_path=ep_full_hourly_results_csv, loader=load_full_hourly_ep_output)
-    ep_hourly_results.load_file_data()
-
     ep_meter_results = DataFileCSV(source_file_path=ep_monthly_meter_results_csv, loader=load_monthly_meter_ep_output)
     ep_meter_results.load_file_data()
 
     # -----------------------------------------------------------------------------------
-    # -- Load the EnergyPlus Simulation Result HTML Data
-    construction_cost_estimate = DataFileEPTables[list](
-        source_file_path=ep_table_results, loader=load_construction_cost_estimate_data
-    )
-    construction_cost_estimate.load_file_data()
-
-    peak_electric_usage_W = DataFileEPTables[float](
-        source_file_path=ep_table_results, loader=load_peak_electric_usage_data
-    )
-    peak_electric_usage_W.load_file_data()
+    # -- Load in the EnergyPlus Simulation Result .SQL data file
+    ep_results_sql = DataFileSQL(source_file_path=ep_full_hourly_results_sql)
 
     # -----------------------------------------------------------------------------------
     # -- Setup the Variant's Fuel Types and Costs
@@ -275,10 +263,11 @@ def get_PhAdorbVariant_from_hb_model(_hb_model: Model) -> PhAdorbVariant:
     hb_model_properties: ModelReviveProperties = getattr(_hb_model.properties, "revive")
     revive_variant = PhAdorbVariant(
         name=_hb_model.display_name or "unnamed",
-        ep_hourly_results_df=ep_hourly_results.data,
         ep_meter_results_df=ep_meter_results.data,
-        construction_cost_estimate=construction_cost_estimate.data,
-        peak_electric_usage_W=peak_electric_usage_W.data,
+        hourly_purchased_electricity_kwh=ep_results_sql.get_hourly_purchased_electricity_kwh(),
+        total_purchased_electricity_kwh=ep_results_sql.get_total_purchased_electricity_kwh(),
+        total_sold_electricity_kwh=ep_results_sql.get_total_sold_electricity_kwh(),
+        peak_electric_usage_W=ep_results_sql.get_peak_electric_watts(),
         electricity=electricity,
         gas=gas,
         grid_region=get_PhAdorbGridRegion_from_hb_model(hb_model_properties),
