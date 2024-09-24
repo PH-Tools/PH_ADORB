@@ -3,39 +3,39 @@
 
 """Create a new Phius ADORB Variant from a Honeybee-Model."""
 
-from typing import Union
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
+from typing import Union
 
 from honeybee.model import Model
 from honeybee_energy.construction.opaque import OpaqueConstruction
 from honeybee_energy.construction.window import WindowConstruction
-from honeybee_energy.load.process import Process
-from honeybee_energy.load.lighting import Lighting
 from honeybee_energy.generator.pv import PVProperties
-from honeybee_energy.properties.model import ModelEnergyProperties
-from honeybee_energy.properties.room import RoomEnergyProperties
-
+from honeybee_energy.load.lighting import Lighting
+from honeybee_energy.load.process import Process
 from honeybee_energy.properties.extension import (
     AllAirSystemProperties,
     DOASSystemProperties,
     HeatCoolSystemProperties,
     IdealAirSystemProperties,
 )
+from honeybee_energy.properties.model import ModelEnergyProperties
+from honeybee_energy.properties.room import RoomEnergyProperties
+from honeybee_energy.properties.shade import ShadeEnergyProperties
 
 AnyHvacSystemProperties = Union[
     AllAirSystemProperties, DOASSystemProperties, HeatCoolSystemProperties, IdealAirSystemProperties
 ]
 from honeybee_energy_revive.hvac.equipment import PhiusReviveHVACEquipment
-from honeybee_revive.properties.model import ModelReviveProperties
 from honeybee_energy_revive.properties.construction.opaque import OpaqueConstructionReviveProperties
-from honeybee_energy_revive.properties.load.process import ProcessReviveProperties
-from honeybee_energy_revive.properties.load.lighting import LightingReviveProperties
 from honeybee_energy_revive.properties.generator.pv import PVPropertiesReviveProperties
 from honeybee_energy_revive.properties.hvac.allair import AllAirSystemReviveProperties
 from honeybee_energy_revive.properties.hvac.doas import DOASSystemReviveProperties
 from honeybee_energy_revive.properties.hvac.heatcool import HeatCoolSystemReviveProperties
 from honeybee_energy_revive.properties.hvac.idealair import IdealAirSystemReviveProperties
+from honeybee_energy_revive.properties.load.lighting import LightingReviveProperties
+from honeybee_energy_revive.properties.load.process import ProcessReviveProperties
+from honeybee_revive.properties.model import ModelReviveProperties
 
 AnyHvacSystemReviveProperties = Union[
     AllAirSystemReviveProperties,
@@ -44,25 +44,15 @@ AnyHvacSystemReviveProperties = Union[
     IdealAirSystemReviveProperties,
 ]
 
-from ph_adorb.constructions import PhAdorbConstructionCollection
+from ph_adorb.constructions import PhAdorbConstruction, PhAdorbConstructionCollection
 from ph_adorb.ep_csv_file import DataFileCSV, load_full_hourly_ep_output, load_monthly_meter_ep_output
-from ph_adorb.ep_html_file import (
-    DataFileEPTables,
-    load_construction_cost_estimate_data,
-    load_peak_electric_usage_data,
-)
-from ph_adorb.equipment import (
-    PhAdorbEquipment,
-    PhAdorbEquipmentCollection,
-    PhAdorbEquipmentType,
-)
+from ph_adorb.ep_html_file import DataFileEPTables, load_construction_cost_estimate_data, load_peak_electric_usage_data
+from ph_adorb.equipment import PhAdorbEquipment, PhAdorbEquipmentCollection, PhAdorbEquipmentType
 from ph_adorb.fuel import PhAdorbFuel, PhAdorbFuelType
 from ph_adorb.grid_region import PhAdorbGridRegion, load_CO2_factors_from_json_file
 from ph_adorb.measures import PhAdorbCO2MeasureCollection, PhAdorbCO2ReductionMeasure
 from ph_adorb.national_emissions import PhAdorbNationalEmissions
 from ph_adorb.variant import PhAdorbVariant
-from ph_adorb.constructions import PhAdorbConstruction
-
 
 # TODO: Add error / warning messages if GridRegion and NationalEmissions are not set in the HB-Model.
 
@@ -71,6 +61,8 @@ def get_hb_model_construction_quantities(_hb_model: Model) -> dict[str, float]:
     """Return a dictionary of total construction quantities (areas) from the HB-Model."""
     construction_quantities_ = defaultdict(float)
     for face in _hb_model.faces:
+        for ap in face.apertures:
+            construction_quantities_[ap.properties.energy.construction.identifier] += ap.area
         construction_quantities_[face.properties.energy.construction.identifier] += face.area
     return construction_quantities_
 
@@ -170,7 +162,7 @@ def convert_hb_shade_pv(_hb_pv: PVProperties) -> PhAdorbEquipment:
 def convert_hb_hvac_equipment(_hb_hvac_equip: PhiusReviveHVACEquipment) -> PhAdorbEquipment:
     """Convert a Honeybee-Energy HVAC Equipment to a Phius ADORB HVAC Equipment."""
     return PhAdorbEquipment(
-        name=_hb_hvac_equip.identifier,
+        name=_hb_hvac_equip.display_name,
         equipment_type=PhAdorbEquipmentType.MECHANICAL,
         cost=_hb_hvac_equip.cost,
         lifetime_years=_hb_hvac_equip.lifetime_years,
@@ -183,30 +175,30 @@ def get_PhAdorbEquipment_from_hb_model(_hb_model: Model) -> PhAdorbEquipmentColl
 
     equipment_collection_ = PhAdorbEquipmentCollection()
 
-    # -- Add all of the Appliances from all of the HB-Rooms
     for room in _hb_model.rooms:
         room_prop: RoomEnergyProperties = getattr(room.properties, "energy")
+
+        # -- Add all of the Appliances from all of the HB-Rooms
         for process_load in room_prop.process_loads:
             equipment_collection_.add_equipment(convert_hb_process_load(process_load))
 
+        # -- Add the room's lighting
         equipment_collection_.add_equipment(convert_hbe_lighting(room_prop.lighting))
 
-    # -- Add all the Shades with PV on them
-    for shade in _hb_model.shades:
-        if not shade.properties.energy.pv_properties:
-            continue
-        equipment_collection_.add_equipment(convert_hb_shade_pv(shade.properties.energy.pv_properties))
-
-    # -- Add all of the HVAC Equipment
-    for room in _hb_model.rooms:
-        room_prop: RoomEnergyProperties = getattr(room.properties, "energy")
+        # -- Add the room's HVAC Equipment
         if not room_prop.hvac:
             continue
-
         hvac_props: AnyHvacSystemProperties = getattr(room_prop.hvac, "properties")
         hvac_prop_revive: AnyHvacSystemReviveProperties = getattr(hvac_props, "revive")
         for hb_hvac_equip in hvac_prop_revive.equipment_collection:
             equipment_collection_.add_equipment(convert_hb_hvac_equipment(hb_hvac_equip))
+
+    # -- Add all the Model's Shades which have PV on them
+    for shade in _hb_model.shades:
+        shade_prop_e: ShadeEnergyProperties = getattr(shade.properties, "energy")
+        if not shade_prop_e.pv_properties:
+            continue
+        equipment_collection_.add_equipment(convert_hb_shade_pv(shade_prop_e.pv_properties))
 
     # TODO: Batteries....
     equipment_collection_.add_equipment(

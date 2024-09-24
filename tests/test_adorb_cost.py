@@ -2,7 +2,7 @@ from pytest import approx
 
 from ph_adorb.adorb_cost import (
     pv_direct_energy_cost,
-    pv_direct_maintenance_cost,
+    pv_install_cost,
     pv_embodied_CO2_cost,
     pv_grid_transition_cost,
     pv_operation_carbon_cost,
@@ -26,10 +26,10 @@ def test_pv_operation_carbon_cost():
 
 def test_pv_direct_maintenance_cost():
     costs = [YearlyCost(0, 0), YearlyCost(1, 1), YearlyCost(2, 2), YearlyCost(3, 3)]
-    assert pv_direct_maintenance_cost(0, costs) == 0
-    assert pv_direct_maintenance_cost(1, costs) == approx(0.9803921568627451)
-    assert pv_direct_maintenance_cost(-1, costs) == approx(0.0)
-    assert pv_direct_maintenance_cost(1, costs, _discount_rate=-1) == 0
+    assert pv_install_cost(0, costs) == 0
+    assert pv_install_cost(1, costs) == approx(0.9803921568627451)
+    assert pv_install_cost(-1, costs) == approx(0.0)
+    assert pv_install_cost(1, costs, _discount_rate=-1) == 0
 
 
 def test_pv_embodied_CO2_cost():

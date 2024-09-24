@@ -20,7 +20,7 @@ class PhAdorbCO2ReductionMeasure(BaseModel):
 
     measure_type: CO2MeasureType
     name: str
-    year: float
+    year: int
     cost: float
     kg_CO2: float | None
     country_name: str
