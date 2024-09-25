@@ -15,8 +15,8 @@ class PhAdorbFuelType(str, Enum):
 
 class PhAdorbFuel(BaseModel):
     fuel_type: PhAdorbFuelType
-    purchase_price: float
-    sale_price: float
+    purchase_price_per_kwh: float
+    sale_price_per_kwh: float
     annual_base_price: float
     used: bool = True
 

@@ -45,7 +45,6 @@ AnyHvacSystemReviveProperties = Union[
 ]
 
 from ph_adorb.constructions import PhAdorbConstruction, PhAdorbConstructionCollection
-from ph_adorb.ep_csv_file import DataFileCSV, load_monthly_meter_ep_output
 from ph_adorb.ep_sql_file import DataFileSQL
 from ph_adorb.equipment import PhAdorbEquipment, PhAdorbEquipmentCollection, PhAdorbEquipmentType
 from ph_adorb.fuel import PhAdorbFuel, PhAdorbFuelType
@@ -84,7 +83,7 @@ def get_PhAdorbCO2Measures_from_hb_model(_hb_model_prop: ModelReviveProperties) 
     for co2_measure in _hb_model_prop.co2_measures:
         measure_collection_.add_measure(
             PhAdorbCO2ReductionMeasure(
-                measure_type=co2_measure.measure_type.value,
+                measure_type=co2_measure.measure_type,
                 name=co2_measure.name,
                 year=co2_measure.year,
                 cost=co2_measure.cost,
@@ -214,7 +213,7 @@ def get_PhAdorbEquipment_from_hb_model(_hb_model: Model) -> PhAdorbEquipmentColl
     return equipment_collection_
 
 
-def get_PhAdorbVariant_from_hb_model(_hb_model: Model) -> PhAdorbVariant:
+def get_PhAdorbVariant_from_hb_model(_hb_model: Model, _results_sql_file_path: Path) -> PhAdorbVariant:
     """Convert the HB-Model to a new ReviveVariant object.
 
     Arguments:
@@ -227,33 +226,22 @@ def get_PhAdorbVariant_from_hb_model(_hb_model: Model) -> PhAdorbVariant:
     """
 
     # -----------------------------------------------------------------------------------
-    # -- Input File Paths
-    input_dir_path = Path("/Users/em/Dropbox/bldgtyp-00/00_PH_Tools/PH_ADORB/tests/_test_input")
-    ep_full_hourly_results_sql = input_dir_path / "example_full_hourly.sql"
-    ep_monthly_meter_results_csv = input_dir_path / "example_monthly_meter.csv"
-
-    # -----------------------------------------------------------------------------------
-    # -- Load the EnergyPlus Simulation Result CSV Data
-    ep_meter_results = DataFileCSV(source_file_path=ep_monthly_meter_results_csv, loader=load_monthly_meter_ep_output)
-    ep_meter_results.load_file_data()
-
-    # -----------------------------------------------------------------------------------
     # -- Load in the EnergyPlus Simulation Result .SQL data file
-    ep_results_sql = DataFileSQL(source_file_path=ep_full_hourly_results_sql)
+    ep_results_sql = DataFileSQL(source_file_path=_results_sql_file_path)
 
     # -----------------------------------------------------------------------------------
     # -- Setup the Variant's Fuel Types and Costs
     electricity = PhAdorbFuel(
         fuel_type=PhAdorbFuelType.ELECTRICITY,
-        purchase_price=0.102,
-        sale_price=0.6,
+        purchase_price_per_kwh=0.102,
+        sale_price_per_kwh=0.6,
         annual_base_price=100.0,
         used=True,
     )
     gas = PhAdorbFuel(
         fuel_type=PhAdorbFuelType.NATURAL_GAS,
-        purchase_price=0.102,
-        sale_price=0.0,
+        purchase_price_per_kwh=0.102,
+        sale_price_per_kwh=0.0,
         annual_base_price=480.0,
         used=True,
     )
@@ -263,7 +251,7 @@ def get_PhAdorbVariant_from_hb_model(_hb_model: Model) -> PhAdorbVariant:
     hb_model_properties: ModelReviveProperties = getattr(_hb_model.properties, "revive")
     revive_variant = PhAdorbVariant(
         name=_hb_model.display_name or "unnamed",
-        ep_meter_results_df=ep_meter_results.data,
+        total_purchased_gas_kwh=ep_results_sql.get_total_purchased_gas_kwh(),
         hourly_purchased_electricity_kwh=ep_results_sql.get_hourly_purchased_electricity_kwh(),
         total_purchased_electricity_kwh=ep_results_sql.get_total_purchased_electricity_kwh(),
         total_sold_electricity_kwh=ep_results_sql.get_total_sold_electricity_kwh(),

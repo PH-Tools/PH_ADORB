@@ -1,5 +1,9 @@
-from collections import defaultdict
+# -*- coding: utf-8 -*-
+# -*- Python Version: 3.10 -*-
 
+"""Functions to preview variant costs in table-format."""
+
+from collections import defaultdict
 from pathlib import Path
 
 from rich.console import Console

@@ -10,12 +10,13 @@ provide the relevant inputs (HBJSON) and the outputs should be saved to a local 
 
 from pathlib import Path
 
-from ph_adorb.variant import calc_variant_ADORB_costs
 from ph_adorb.from_HBJSON import create_variant, read_HBJSON_file
+from ph_adorb.variant import calc_variant_ADORB_costs
 
 # --- Input / Output file Path
 # -------------------------------------------------------------------------
 INPUT_HBJSON_FILE_PATH = Path("tests/_test_input/example.hbjson")
+INPUT_SQL_RESULTS_FILE_PATH = Path("tests/_test_input/example_full_hourly.sql")
 OUTPUT_CSV_FILE_PATH = Path("tests/_test_output/example.csv")
 
 if __name__ == "__main__":
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     print(f">> Honeybee-Model '{hb_model.display_name}' successfully re-built from file.")
 
     # --- Generate the PH-ADORB-Variant from the Honeybee-Model
-    revive_variant = create_variant.get_PhAdorbVariant_from_hb_model(hb_model)
+    revive_variant = create_variant.get_PhAdorbVariant_from_hb_model(hb_model, INPUT_SQL_RESULTS_FILE_PATH)
 
     # --- Get the ADORB Costs for the PH-ADORB-Variant
     # -------------------------------------------------------------------------

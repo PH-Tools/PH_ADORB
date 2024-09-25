@@ -12,8 +12,8 @@ import os
 import sys
 from pathlib import Path
 
-from ph_adorb.variant import calc_variant_ADORB_costs
 from ph_adorb.from_HBJSON import create_variant, read_HBJSON_file
+from ph_adorb.variant import calc_variant_ADORB_costs
 
 
 class InputFileError(Exception):

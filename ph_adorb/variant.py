@@ -3,27 +3,26 @@
 
 """A Building Variant with all of its relevant data, and related functions."""
 
-import pandas as pd
-from pydantic import BaseModel, Field
 from pathlib import Path
 
+import pandas as pd
+from pydantic import BaseModel, Field
+
+from ph_adorb import adorb_cost
 from ph_adorb.constructions import PhAdorbConstructionCollection
 from ph_adorb.equipment import PhAdorbEquipmentCollection
 from ph_adorb.fuel import PhAdorbFuel
 from ph_adorb.grid_region import PhAdorbGridRegion
 from ph_adorb.measures import PhAdorbCO2MeasureCollection
 from ph_adorb.national_emissions import PhAdorbNationalEmissions
-from ph_adorb.yearly_values import YearlyCost, YearlyKgCO2
-from ph_adorb import adorb_cost
-
 from ph_adorb.tables.variant_costs import (
-    preview_yearly_install_costs,
-    preview_yearly_embodied_CO2_costs,
-    preview_yearly_embodied_kgCO2,
     preview_variant_constructions,
     preview_variant_equipment,
+    preview_yearly_embodied_CO2_costs,
+    preview_yearly_embodied_kgCO2,
+    preview_yearly_install_costs,
 )
-
+from ph_adorb.yearly_values import YearlyCost, YearlyKgCO2
 
 # ---------------------------------------------------------------------------------------
 
@@ -32,7 +31,7 @@ class PhAdorbVariant(BaseModel):
     """A single Variant of a building design."""
 
     name: str
-    ep_meter_results_df: pd.DataFrame
+    total_purchased_gas_kwh: float
     hourly_purchased_electricity_kwh: list[float]
     total_purchased_electricity_kwh: float
     total_sold_electricity_kwh: float
@@ -75,14 +74,14 @@ class PhAdorbVariant(BaseModel):
 def calc_annual_total_electric_cost(
     _purchased_electricity_kwh: float,
     _sold_electricity_kwh: float,
-    _electric_purchase_price: float,
-    _electric_sell_price: float,
+    _electric_purchase_price_per_kwh: float,
+    _electric_sell_price_per_kwh: float,
     _electric_annual_base_price: float,
 ) -> float:
     """Return the total annual electricity cost for the building."""
 
-    total_purchased_electric_cost = _purchased_electricity_kwh * _electric_purchase_price
-    total_sold_electric_cost = _sold_electricity_kwh * _electric_sell_price
+    total_purchased_electric_cost = _purchased_electricity_kwh * _electric_purchase_price_per_kwh
+    total_sold_electric_cost = _sold_electricity_kwh * _electric_sell_price_per_kwh
     total_annual_electric_cost = total_purchased_electric_cost - total_sold_electric_cost + _electric_annual_base_price
     return total_annual_electric_cost
 
@@ -104,36 +103,32 @@ def calc_annuals_hourly_electric_CO2(
 
 
 def calc_annual_total_gas_cost(
+    _total_purchased_gas_kwh: float,
     _gas_used: bool,
-    _ep_meter_data: pd.DataFrame,
-    _gas_purchase_price: float,
+    _gas_purchase_price_per_kwh: float,
     _gas_annual_base_price: float,
 ) -> float:
     """Return the total annual gas cost for the building."""
 
-    TONS_CO2_PER_JOULE = 0.000000009478169879
-    FIELD_NAME = "NaturalGas:Facility [J](Monthly) "
-
     if not _gas_used:
         return 0.0
 
-    t = sum(_ep_meter_data[FIELD_NAME] * TONS_CO2_PER_JOULE)
-    return (t * _gas_purchase_price) + _gas_annual_base_price
+    return (_total_purchased_gas_kwh * _gas_purchase_price_per_kwh) + _gas_annual_base_price
 
 
 def calc_annual_total_gas_CO2(
+    _total_purchased_gas_kwh: float,
     _gas_used: bool,
-    _ep_meter_data: pd.DataFrame,
 ) -> float:
-    NAT_GAS_FIELD_NAME = "NaturalGas:Facility [J](Monthly) "
-    TONS_CO2_PER_JOULE = 0.000000009478169879
-    # TODO: What is is constant?
+
+    # TODO: What is this '12.7' constant?
     SOME_CONSTANT = 12.7
+    TONS_CO2_PER_KWH = 0.0341
 
     if not _gas_used:
         return 0.0
 
-    return sum(_ep_meter_data[NAT_GAS_FIELD_NAME] * TONS_CO2_PER_JOULE) * SOME_CONSTANT
+    return TONS_CO2_PER_KWH * _total_purchased_gas_kwh * SOME_CONSTANT
 
 
 # ---------------------------------------------------------------------------------------
@@ -296,8 +291,8 @@ def calc_variant_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path
     annual_total_cost_electric = calc_annual_total_electric_cost(
         _variant.total_purchased_electricity_kwh,
         _variant.total_sold_electricity_kwh,
-        _variant.electricity.purchase_price,
-        _variant.electricity.sale_price,
+        _variant.electricity.purchase_price_per_kwh,
+        _variant.electricity.sale_price_per_kwh,
         _variant.electricity.annual_base_price,
     )
     annual_hourly_CO2_electric = calc_annuals_hourly_electric_CO2(
@@ -309,14 +304,14 @@ def calc_variant_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path
     # -----------------------------------------------------------------------------------
     # -- Gas: Annual Costs, Annual CO2
     annual_total_cost_gas = calc_annual_total_gas_cost(
+        _variant.total_purchased_gas_kwh,
         _variant.gas.used,
-        _variant.ep_meter_results_df,
-        _variant.gas.purchase_price,
+        _variant.gas.purchase_price_per_kwh,
         _variant.gas.annual_base_price,
     )
     annual_total_CO2_gas = calc_annual_total_gas_CO2(
+        _variant.total_purchased_gas_kwh,
         _variant.gas.used,
-        _variant.ep_meter_results_df,
     )
 
     # -----------------------------------------------------------------------------------
@@ -380,8 +375,8 @@ def calc_variant_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path
     )
 
     if _output_tables_path:
-        preview_variant_equipment(_variant.equipment_collection, _output_tables_path)
         preview_variant_constructions(_variant.construction_collection, _output_tables_path)
+        preview_variant_equipment(_variant.equipment_collection, _output_tables_path)
         preview_yearly_install_costs(all_yearly_install_costs, _output_tables_path)
         preview_yearly_embodied_kgCO2(all_yearly_embodied_kgCO2, _output_tables_path)
         preview_yearly_embodied_CO2_costs(all_yearly_embodied_kgCO2_costs, _output_tables_path)
