@@ -22,7 +22,7 @@ class InputFileError(Exception):
         super().__init__(self.msg)
 
 
-def resolve_paths(_args: list[str]) -> tuple[Path, Path]:
+def resolve_paths(_args: list[str]) -> tuple[Path, Path, Path]:
     """Sort out the file input and output paths. Make the output directory if needed.
 
     Arguments:
@@ -33,18 +33,23 @@ def resolve_paths(_args: list[str]) -> tuple[Path, Path]:
     --------
         * Tuple
             - [1] (str): The HBJSON Source file path.
-            - [2] (str): The ADORB CSV Target path.
+            - [2] (str): The path to the EnergyPlus Results SQL File
+            - [3] (str): The ADORB CSV Target path.
     """
 
-    assert len(_args) == 3, "Error: Incorrect number of arguments."
+    assert len(_args) == 4, "Error: Incorrect number of arguments."
 
     # -- Check if the HBJSON file exists.
     hbjson_source_filepath = Path(_args[1])
     if not hbjson_source_filepath.exists():
         raise InputFileError(hbjson_source_filepath)
 
+    results_sql_file = Path(_args[2])
+    if not results_sql_file.exists():
+        raise InputFileError(results_sql_file)
+
     # -- If the folder of the target_csv_filepath does not exist, make it.
-    target_csv_filepath = Path(_args[2])
+    target_csv_filepath = Path(_args[3])
     target_dir = target_csv_filepath.parent
     if not target_dir.exists():
         os.mkdir(target_dir)
@@ -53,7 +58,7 @@ def resolve_paths(_args: list[str]) -> tuple[Path, Path]:
     if target_csv_filepath.exists():
         os.remove(target_csv_filepath)
 
-    return hbjson_source_filepath, target_csv_filepath
+    return hbjson_source_filepath, results_sql_file, target_csv_filepath
 
 
 if __name__ == "__main__":
@@ -66,25 +71,30 @@ if __name__ == "__main__":
     # --- Input / Output file Path
     # -------------------------------------------------------------------------
     print("\t>> Resolving file paths...")
-    SOURCE_HBJSON_FILE, TARGET_CSV_FILE = resolve_paths(sys.argv)
-    print(f"\t>> Source HBJSON File: '{SOURCE_HBJSON_FILE}'")
-    print(f"\t>> Target CSV File: '{TARGET_CSV_FILE}'")
+    INPUT_HBJSON_FILE_PATH, INPUT_SQL_RESULTS_FILE_PATH, OUTPUT_CSV_FILE_PATH = resolve_paths(sys.argv)
+    print(f"\t>> Source HBJSON File: '{INPUT_HBJSON_FILE_PATH}'")
+    print(f"\t>> Source SQL File: '{INPUT_SQL_RESULTS_FILE_PATH}'")
+    print(f"\t>> Target CSV File: '{OUTPUT_CSV_FILE_PATH}'")
 
-    # --- Read in the existing HB_JSON and re-build the HB Model
+    # --- Read in the existing HB-JSON-File
     # -------------------------------------------------------------------------
-    hb_json_dict = read_HBJSON_file.read_hb_json_from_file(SOURCE_HBJSON_FILE)
+    print(f"Loading the Honeybee-Model from the HBJSON file: {INPUT_HBJSON_FILE_PATH}")
+    hb_json_dict = read_HBJSON_file.read_hb_json_from_file(INPUT_HBJSON_FILE_PATH)
+
+    # -- Re-Build the Honeybee-Model from the HBJSON-Dict
+    # -------------------------------------------------------------------------
     hb_model = read_HBJSON_file.convert_hbjson_dict_to_hb_model(hb_json_dict)
-    print(f"\t>> HB Model '{hb_model.display_name}' successfully re-built.")
+    print(f">> Honeybee-Model '{hb_model.display_name}' successfully re-built from file.")
 
-    # --- Generate the Revive Variant.
-    revive_variant = create_variant.get_PhAdorbVariant_from_hb_model(hb_model)
+    # --- Generate the PH-ADORB-Variant from the Honeybee-Model
+    revive_variant = create_variant.get_PhAdorbVariant_from_hb_model(hb_model, INPUT_SQL_RESULTS_FILE_PATH)
 
-    # --- Get the ADORB Costs as a Pandas DataFrame
+    # --- Get the ADORB Costs for the PH-ADORB-Variant
     # -------------------------------------------------------------------------
     variant_ADORB_df = calc_variant_ADORB_costs(revive_variant)
 
     # --- Output the ADORB Costs to a CSV File
     # -------------------------------------------------------------------------
-    variant_ADORB_df.to_csv(TARGET_CSV_FILE)
+    variant_ADORB_df.to_csv(OUTPUT_CSV_FILE_PATH)
     print("\t>> Done calculating the ADORB Costs. The CSV file has been saved.")
     print("- " * 50)
