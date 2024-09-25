@@ -1,31 +1,32 @@
-name: Deploy to PyPi
+name: CI
 
 on:
   release:
     types: [published]
-
-permissions:
-  contents: read
+  
+permissions: write-all
 
 jobs:
-  deploy:
+
+  test:
+    name: Unit tests
 
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        python-version: [3.10.14]
+    
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build
-    - name: Build package
-      run: python -m build
-    - name: Publish package
-      uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-      with:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      - uses: actions/checkout@v2
+      - name: set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: install python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r dev-requirements.txt
+      - name: run tests
+        run: python -m pytest tests/
