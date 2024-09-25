@@ -1,8 +1,12 @@
-name: Release Workflow
+name: Deploy Published Release to PyPi
+
 on:
   release:
     types: [published]
-permissions: read-all
+
+permissions:
+  contents: read
+
 jobs:
   run-python-test:
     name: Unit tests
@@ -26,8 +30,8 @@ jobs:
       - name: run tests
         run: python -m pytest tests/
   
-  deploy-to-pypi:
-    name: Deploy to GitHub and PyPI
+  build-sdist:
+    name: Build Python sdist
     runs-on: ubuntu-latest
     needs: run-python-test
 
@@ -55,3 +59,21 @@ jobs:
         with:
           name: release-dists
           path: dist/
+  
+  pypi-publish:
+    runs-on: ubuntu-latest
+    needs: build-sdist
+    permissions:
+      id-token: write
+    environment:
+      name: pypi
+      url: https://pypi.org/project/PH-ADORB/
+    steps:
+      - name: Retrieve release distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+      # - name: Publish release distributions to PyPI
+      #   uses: pypa/gh-action-pypi-publish@release/v1
