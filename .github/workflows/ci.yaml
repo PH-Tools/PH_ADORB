@@ -49,4 +49,4 @@ jobs:
           pip install .
 
       - name: build package
-        run: python -m build
+        run: python -m build --sdist

@@ -34,7 +34,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
-dev = ["black", "isort", "pyteest", "coverage"]
+dev = ["black", "isort", "pytest", "coverage"]
 
 [project.urls]
 homepage = "https://www.passivehousetools.com/"
