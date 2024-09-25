@@ -1,25 +1,45 @@
 [project]
-name = "your-package-name"
-version = "0.1.0"
-description = "A short description of your package"
+name = "PH-ADORB"
+version = "0.0.1"
+description = "Calculate the ADORB cost for a Passive House building."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "Your Name", email = "your.email@example.com" }]
-maintainers = [{ name = "Your Name", email = "your.email@example.com" }]
+authors = [{ name = "Ed May", email = "phtools@bldgtyp.com" }]
+maintainers = [{ name = "Ed May", email = "phtools@bldgtyp.com" }]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-keywords = ["some", "keywords", "for", "your", "package"]
-dependencies = ["pandas>=1.0", "numpy>=1.18"]
+keywords = [
+    "PHIUS",
+    "Honeybee",
+    "Passive House",
+    "Honeybee-Energy",
+    "Building Retrofit",
+    "ADORB",
+    "Carbon",
+    "CO2",
+]
+dependencies = [
+    "honeybee-energy==1.109.1",
+    "pandas==2.2.3",
+    "ph-units==1.5.13",
+    "rich==13.8.1",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+dev = ["black", "isort", "pyteest", "coverage"]
 
 [project.urls]
-homepage = "https://example.com"
-repository = "https://github.com/yourusername/your-repo"
-documentation = "https://example.com/docs"
-changelog = "https://example.com/changelog"
+homepage = "https://www.passivehousetools.com/"
+repository = "https://github.com/PH-Tools/PH_ADORB/tree/main"
+
 
 [tool.coverage.run]
 command_line = "-m pytest tests"
