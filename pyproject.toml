@@ -1,6 +1,6 @@
 [project]
 name = "PH-ADORB"
-version = "0.0.2"
+version = "0.0.3"
 description = "Calculate the ADORB cost for a Passive House building."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -13,20 +13,23 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 keywords = [
-    "PHIUS",
     "Honeybee",
-    "Passive House",
     "Honeybee-Energy",
+    "Passive House",
     "Building Retrofit",
+    "Architecture",
+    "Energy Modeling",
+    "PHIUS",
     "ADORB",
-    "Carbon",
-    "CO2",
+    "Carbon Emissions",
+    "Embodied Carbon",
+    "Embodied CO2",
 ]
 dependencies = [
-    "honeybee-energy==1.109.1",
-    "pandas==2.2.3",
-    "ph-units==1.5.13",
-    "rich==13.8.1",
+    "honeybee-energy>=1.109.1",
+    "pandas>=2.2.3",
+    "ph-units>=1.5.13",
+    "rich>=13.8.1",
 ]
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest", "coverage"]
@@ -45,7 +48,7 @@ command_line = "-m pytest tests"
 source = ["ph_adorb"]
 branch = true
 cover_pylib = false
-omit = ["*/__init__.py", "*.venv/*", "*.venv_mbair/*"]
+omit = ["*/__init__.py", "*.venv/*"]
 
 [tool.coverage.report]
 show_missing = true
