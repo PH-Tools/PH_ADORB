@@ -43,7 +43,8 @@ Note that PH-ADORB uses [`pytest`](https://docs.pytest.org/en/stable/#) to run a
 ### Development [Deployment]:
 This package is [published on PyPi](https://pypi.org/project/PH-ADORB/). To deploy a new version:
 1. Update the [pyproject.toml version number](https://github.com/PH-Tools/PH_ADORB/blob/f3bbed034b91088bd240a36227ffb841afd51859/pyproject.toml#L3)
-1. Publish a new release through the GitHub page.
+1. Publish a new release through the GitHub repository page:
+![Screenshot 2024-09-26 at 10 05 14 AM](https://github.com/user-attachments/assets/8e831f39-03ee-4704-8a78-f3353960b3ea)
 1. This is will trigger the [ci.yaml](https://github.com/PH-Tools/PH_ADORB/blob/main/.github/workflows/ci.yaml) GitHub Action, build, and deploy the package.
 
 
