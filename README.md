@@ -31,11 +31,12 @@ This package is [hosted on PyPi](https://pypi.org/project/PH-ADORB/). To install
 ### Development [Local]:
 PH-ADORB is free and open-source. We welcome any and all thoughts, opinions, and contributions! To get setup for local development:
 1. **Fork** this GitHub repository to your own GitHub account.
-1. **Clone** the repository to your computer.
+1. **Clone** the repository-fork onto your computer.
 1. Setup a **virtual environment**.
 1. Install the required **dependencies**.
-1. Make your edits.
-1. Submit a **Pull-Request** to merge your edits into the main branch.
+1. Make your edits or changes.
+1. Add tests to cover your changes.
+1. Submit a **Pull-Request** to merge your changes into the main branch.
 
 ### Development [Tests]:
 Note that PH-ADORB uses [`pytest`](https://docs.pytest.org/en/stable/#) to run all of the automated testing. Please be sure to include tests for any contributions or edits.
