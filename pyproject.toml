@@ -4,12 +4,12 @@ version = "0.0.3"
 description = "Calculate the ADORB cost for a Passive House building."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = { text = "GNU" }
 authors = [{ name = "Ed May", email = "phtools@bldgtyp.com" }]
 maintainers = [{ name = "Ed May", email = "phtools@bldgtyp.com" }]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU License",
     "Operating System :: OS Independent",
 ]
 keywords = [
