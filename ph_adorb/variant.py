@@ -15,7 +15,8 @@ from ph_adorb.fuel import PhAdorbFuel
 from ph_adorb.grid_region import PhAdorbGridRegion
 from ph_adorb.measures import PhAdorbCO2MeasureCollection
 from ph_adorb.national_emissions import PhAdorbNationalEmissions
-from ph_adorb.tables.variant_costs import (
+from ph_adorb.tables.variant import (
+    preview_variant_co2_measures,
     preview_variant_constructions,
     preview_variant_equipment,
     preview_yearly_embodied_CO2_costs,
@@ -375,6 +376,7 @@ def calc_variant_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path
     )
 
     if _output_tables_path:
+        preview_variant_co2_measures(_variant.measure_collection, _output_tables_path)
         preview_variant_constructions(_variant.construction_collection, _output_tables_path)
         preview_variant_equipment(_variant.equipment_collection, _output_tables_path)
         preview_yearly_install_costs(all_yearly_install_costs, _output_tables_path)

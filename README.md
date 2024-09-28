@@ -11,7 +11,7 @@ electrical service capacity.
 [[Phius Revive 2024 Retrofit Standard for Buildings v24.1.00]](https://www.phius.org/phius-revive-2024-standard-document)
 
 - - - 
-The ADORB cost is used as part of the  [Phius-REVIVE](https://www.phius.org/phius-revive-2024) building retrofit program. [Phius Research Committee](https://github.com/Phius-ResearchComittee) has an example implementation of the ADORB calculation which can be found on the [Phius GitHub repository](https://github.com/Phius-ResearchComittee/REVIVE/tree/main/REVIVE2024).
+The **ADORB** cost is used as part of the  [Phius-REVIVE](https://www.phius.org/phius-revive-2024) building retrofit program. The [Phius Research Committee](https://github.com/Phius-ResearchComittee) has an example implementation of the **ADORB** calculation which can be found on the [Phius GitHub repository](https://github.com/Phius-ResearchComittee/REVIVE/tree/main/REVIVE2024).
 
 
 This new PH-ADORB library is an adaptation of Phius's original code into an object-oriented version. This library is a work-in-progress and should NOT be used for any actual Phius compliance analysis or reporting. 
@@ -34,7 +34,8 @@ PH-ADORB is free and open-source. We welcome any and all thoughts, opinions, and
 1. **Clone** the repository-fork onto your computer.
 1. Setup a **virtual environment**.
 1. Install the required **dependencies**.
-1. Make your edits or changes.
+1. *Recommended* Create a new **Branch** for all your changes.
+1. Make your changes.
 1. Add tests to cover your changes.
 1. Submit a **Pull-Request** to merge your changes into the main branch.
 
@@ -51,11 +52,10 @@ This package is [published on PyPi](https://pypi.org/project/PH-ADORB/). To depl
 
 
 # More Information:
-For more information on the use of these tools, check out the the Passive House Tools website:
-[https://www.PassiveHouseTools.com](https://www.PassiveHouseTools.com)
+For more information on the use of these tools, check out the the [Passive House Tools website.](https://www.PassiveHouseTools.com)
 
 ### Contact:
-For questions about PH-ADORB, feel free to reach out at: PHTools@bldgtyp.com
+For questions about PH-ADORB or any of the Passive House Tools, feel free to reach out to us at: PHTools@bldgtyp.com
 
 
 ![Tests](https://github.com/PH-Tools/ph_adorb/actions/workflows/ci.yaml/badge.svg)
