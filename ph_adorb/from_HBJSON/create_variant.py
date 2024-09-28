@@ -253,7 +253,6 @@ def get_PhAdorbVariant_from_hb_model(_hb_model: Model, _results_sql_file_path: P
         name=_hb_model.display_name or "unnamed",
         total_purchased_gas_kwh=ep_results_sql.get_total_purchased_gas_kwh(),
         hourly_purchased_electricity_kwh=ep_results_sql.get_hourly_purchased_electricity_kwh(),
-        total_purchased_electricity_kwh=ep_results_sql.get_total_purchased_electricity_kwh(),
         total_sold_electricity_kwh=ep_results_sql.get_total_sold_electricity_kwh(),
         peak_electric_usage_W=ep_results_sql.get_peak_electric_watts(),
         electricity=electricity,

@@ -49,6 +49,80 @@ def rich_table_to_html(_tbl: Table) -> str:
     return html_
 
 
+def preview_hourly_electric_and_CO2(
+    _hourly_kwh: list[float], _hourly_CO2_factors: dict[int, list[float]], _output_path: Path | None
+) -> None:
+    # Create the table
+    tbl_ = Table(title="Hourly Electric Consumption (kWh) and CO2 Factors (kgCO2/kWh)", show_lines=True)
+    tbl_.add_column("Hour", style="cyan", justify="center", min_width=20, no_wrap=True)
+    tbl_.add_column("kWh", style="magenta", justify="center")
+    for year in _hourly_CO2_factors.keys():
+        tbl_.add_column(f"{year}", style="magenta", justify="center")
+
+    # Iterate over the hourly data and add rows to the table
+    for i, kwh in enumerate(_hourly_kwh):
+        factors_by_year: list[str] = []
+        for yearly_factors in _hourly_CO2_factors.values():
+            factors_by_year.append(f"{yearly_factors[i]:,.2f}")
+        tbl_.add_row(f"{i:04d}", f"{kwh:,.2f}", *factors_by_year)
+
+    # Output the table to the console or write to a file
+    if _output_path:
+        html_table = rich_table_to_html(tbl_)
+        with open(Path(_output_path / "hourly_electric_kwh.html"), "w") as f:
+            f.write(html_table)
+    else:
+        console = Console()
+        console.print(tbl_)
+
+
+def preview_yearly_energy_and_CO2(
+    _elec_kwh: float, _elec_CO2_by_future_year: list[float], _gas_kwh: float, _gas_CO2: float, _output_path: Path | None
+) -> None:
+    # Create the table
+    tbl_ = Table(title="Future Annual Energy Consumption and CO2 Emissions", show_lines=True)
+    tbl_.add_column("Year", style="cyan", justify="center", min_width=20, no_wrap=True)
+    tbl_.add_column("Elec. kWh", style="magenta", justify="center")
+    tbl_.add_column("Elec. kgCO2", style="magenta", justify="center")
+    tbl_.add_column("Elec. Grid Factor (kgCO2/kWh)", style="magenta", justify="center")
+    tbl_.add_column("Gas kWh", style="magenta", justify="center")
+    tbl_.add_column("Gas kgCO2", style="magenta", justify="center")
+    tbl_.add_column("Gas Grid Factor (kgCO2/kWh)", style="magenta", justify="center")
+
+    # Iterate over the hourly data and add rows to the table
+    for i, co2 in enumerate(
+        _elec_CO2_by_future_year,
+    ):
+        try:
+            elec_grid_factor = co2 / _elec_kwh
+        except ZeroDivisionError:
+            elec_grid_factor = 0.0
+
+        try:
+            gas_grid_factor = _gas_CO2 / _gas_kwh
+        except ZeroDivisionError:
+            gas_grid_factor = 0.0
+
+        tbl_.add_row(
+            f"{2023+i:02d}",
+            f"{_elec_kwh:,.2f}",
+            f"{co2:,.2f}",
+            f"{elec_grid_factor:,.3f}",
+            f"{_gas_kwh:,.2f}",
+            f"{_gas_CO2:,.2f}",
+            f"{gas_grid_factor:,.3f}",
+        )
+
+    # Output the table to the console or write to a file
+    if _output_path:
+        html_table = rich_table_to_html(tbl_)
+        with open(Path(_output_path / "annual_electric_kwh_and_CO2.html"), "w") as f:
+            f.write(html_table)
+    else:
+        console = Console()
+        console.print(tbl_)
+
+
 def preview_variant_co2_measures(
     _co2_measure_collection: PhAdorbCO2MeasureCollection, _output_path: Path | None
 ) -> None:

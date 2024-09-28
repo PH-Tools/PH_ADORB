@@ -16,6 +16,8 @@ from ph_adorb.grid_region import PhAdorbGridRegion
 from ph_adorb.measures import PhAdorbCO2MeasureCollection
 from ph_adorb.national_emissions import PhAdorbNationalEmissions
 from ph_adorb.tables.variant import (
+    preview_hourly_electric_and_CO2,
+    preview_yearly_energy_and_CO2,
     preview_variant_co2_measures,
     preview_variant_constructions,
     preview_variant_equipment,
@@ -34,7 +36,6 @@ class PhAdorbVariant(BaseModel):
     name: str
     total_purchased_gas_kwh: float
     hourly_purchased_electricity_kwh: list[float]
-    total_purchased_electricity_kwh: float
     total_sold_electricity_kwh: float
     peak_electric_usage_W: float
     electricity: PhAdorbFuel
@@ -49,6 +50,11 @@ class PhAdorbVariant(BaseModel):
     equipment_collection: PhAdorbEquipmentCollection = Field(default_factory=PhAdorbEquipmentCollection)
 
     price_of_carbon: float = 0.25
+
+    @property
+    def total_purchased_electricity_kwh(self) -> float:
+        """Return the total annual purchased electricity in KWH."""
+        return sum(self.hourly_purchased_electricity_kwh)
 
     class Config:
         arbitrary_types_allowed = True
@@ -87,8 +93,8 @@ def calc_annual_total_electric_cost(
     return total_annual_electric_cost
 
 
-def calc_annuals_hourly_electric_CO2(
-    _hourly_purchased_electricity_kwh: list[float], _grid_region_factors: PhAdorbGridRegion
+def calc_annual_hourly_electric_CO2(
+    _hourly_purchased_electricity_kwh: list[float], _grid_region: PhAdorbGridRegion
 ) -> list[float]:
     """Return a list of total annual CO2 emissions for each year from 2023 - 2011 (89 years)."""
     MWH_PER_KWH = 0.001
@@ -97,10 +103,10 @@ def calc_annuals_hourly_electric_CO2(
     hourly_electric_MWH = pd.Series(_hourly_purchased_electricity_kwh) * MWH_PER_KWH
 
     # Multiply each year's factors by the hourly electric MWH list, and sum the results for each year.
-    total_annual_CO2: list[float] = (
-        (_grid_region_factors.get_CO2_factors_as_df().multiply(hourly_electric_MWH, axis=0)).sum().tolist()
+    annual_hourly_electric_CO2: list[float] = (
+        (_grid_region.get_CO2_factors_as_df().multiply(hourly_electric_MWH, axis=0)).sum().tolist()
     )
-    return total_annual_CO2
+    return annual_hourly_electric_CO2
 
 
 def calc_annual_total_gas_cost(
@@ -296,7 +302,7 @@ def calc_variant_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path
         _variant.electricity.sale_price_per_kwh,
         _variant.electricity.annual_base_price,
     )
-    annual_hourly_CO2_electric = calc_annuals_hourly_electric_CO2(
+    future_annual_total_CO2_electric = calc_annual_hourly_electric_CO2(
         _variant.hourly_purchased_electricity_kwh,
         _variant.grid_region,
     )
@@ -376,6 +382,18 @@ def calc_variant_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path
     )
 
     if _output_tables_path:
+        preview_hourly_electric_and_CO2(
+            _variant.hourly_purchased_electricity_kwh,
+            _variant.grid_region.hourly_CO2_factors,
+            _output_tables_path,
+        )
+        preview_yearly_energy_and_CO2(
+            _variant.total_purchased_electricity_kwh,
+            future_annual_total_CO2_electric,
+            _variant.total_purchased_gas_kwh,
+            annual_total_CO2_gas,
+            _output_tables_path,
+        )
         preview_variant_co2_measures(_variant.measure_collection, _output_tables_path)
         preview_variant_constructions(_variant.construction_collection, _output_tables_path)
         preview_variant_equipment(_variant.equipment_collection, _output_tables_path)
@@ -390,7 +408,7 @@ def calc_variant_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path
         _variant.analysis_duration,
         annual_total_cost_electric,
         annual_total_cost_gas,
-        annual_hourly_CO2_electric,
+        future_annual_total_CO2_electric,
         annual_total_CO2_gas,
         all_yearly_install_costs,
         all_yearly_embodied_kgCO2_costs,
