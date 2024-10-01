@@ -20,7 +20,8 @@ This new PH-ADORB library is an adaptation of Phius's original code into an obje
 
 
 <details>
-<summary><span style="font-size: 2em; font-weight:600;">Installation</span></summary>
+<summary><strong>Installation</strong></summary>
+
 This package is [hosted on PyPi](https://pypi.org/project/PH-ADORB/). To install the latests version of the package:
 
 ```python
@@ -29,7 +30,7 @@ This package is [hosted on PyPi](https://pypi.org/project/PH-ADORB/). To install
 </details>
 
 <details>
-<summary><span style="font-size: 2em; font-weight:600;">Development</span></summary>
+<summary><strong>Development</strong></summary>
 
 ### Development [Local]:
 PH-ADORB is free and open-source. We welcome any and all thoughts, opinions, and contributions! To get setup for local development:
@@ -52,12 +53,11 @@ This package is [published on PyPi](https://pypi.org/project/PH-ADORB/). To depl
 1. Publish a new release through the GitHub repository page:
 ![Screenshot 2024-09-26 at 10 05 14 AM](https://github.com/user-attachments/assets/8e831f39-03ee-4704-8a78-f3353960b3ea)
 1. This is will trigger the [ci.yaml](https://github.com/PH-Tools/PH_ADORB/blob/main/.github/workflows/ci.yaml) GitHub Action, build, and deploy the package.
-
 </details>
 
 
 <details>
-<summary><span style="font-size: 2em; font-weight:600;">More Information</span></summary>
+<summary><strong>More Information</strong></summary>
 
 For more information on the use of these tools, check out the the [Passive House Tools website](https://www.PassiveHouseTools.com).
 
