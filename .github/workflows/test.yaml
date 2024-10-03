@@ -3,7 +3,6 @@ name: TEST
 on:
   workflow_dispatch:
 
-
 permissions:
   contents: read
 
@@ -18,11 +17,20 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
+      
       - name: set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+              ${{ runner.os }}-pip-
+
       - name: install python dependencies
         run: |
           python -m pip install --upgrade pip
