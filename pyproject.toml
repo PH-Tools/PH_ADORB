@@ -26,7 +26,7 @@ keywords = [
     "Embodied CO2",
 ]
 dependencies = [
-    "honeybee-energy>=1.109.2",
+    "honeybee-energy>=1.109.6",
     "honeybee-revive>=0.0.6",
     "pandas>=2.2.3",
     "ph-units>=1.5.13",
