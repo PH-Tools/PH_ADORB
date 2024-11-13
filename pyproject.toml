@@ -1,6 +1,6 @@
 [project]
 name = "PH-ADORB"
-version = "0.0.5"
+version = "0.0.6"
 description = "Calculate the ADORB cost for a Passive House building."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -26,10 +26,11 @@ keywords = [
     "Embodied CO2",
 ]
 dependencies = [
-    "honeybee-energy>=1.109.6",
-    "honeybee-revive>=0.0.6",
+    "honeybee-energy>=1.109.17",
+    "honeybee-revive>=0.0.9",
     "pandas>=2.2.3",
-    "ph-units>=1.5.13",
+    "plotly>=5.24.1",
+    "ph-units>=1.5.15",
     "rich>=13.8.1",
 ]
 [project.optional-dependencies]
