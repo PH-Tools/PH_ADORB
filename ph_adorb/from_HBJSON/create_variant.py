@@ -249,21 +249,29 @@ def get_PhAdorbVariant_from_hb_model(_hb_model: Model, _results_sql_file_path: P
     # -----------------------------------------------------------------------------------
     # -- Create the actual Variant
     hb_model_properties: ModelReviveProperties = getattr(_hb_model.properties, "revive")
-    revive_variant = PhAdorbVariant(
-        name=_hb_model.display_name or "unnamed",
-        total_purchased_gas_kwh=ep_results_sql.get_total_purchased_gas_kwh(),
-        hourly_purchased_electricity_kwh=ep_results_sql.get_hourly_purchased_electricity_kwh(),
-        total_sold_electricity_kwh=ep_results_sql.get_total_sold_electricity_kwh(),
-        peak_electric_usage_W=ep_results_sql.get_peak_electric_watts(),
-        electricity=electricity,
-        gas=gas,
-        grid_region=get_PhAdorbGridRegion_from_hb_model(hb_model_properties),
-        national_emissions=get_PhAdorbNationalEmissions_from_hb_mode(hb_model_properties),
-        analysis_duration=hb_model_properties.analysis_duration,
-        envelope_labor_cost_fraction=hb_model_properties.envelope_labor_cost_fraction,
-        measure_collection=get_PhAdorbCO2Measures_from_hb_model(hb_model_properties),
-        construction_collection=get_PhAdorbConstructions_from_hb_model(_hb_model),
-        equipment_collection=get_PhAdorbEquipment_from_hb_model(_hb_model),
-    )
+
+    try:
+        revive_variant = PhAdorbVariant(
+            name=_hb_model.display_name or "unnamed",
+            total_purchased_gas_kwh=ep_results_sql.get_total_purchased_gas_kwh(),
+            hourly_purchased_electricity_kwh=ep_results_sql.get_hourly_purchased_electricity_kwh(),
+            total_sold_electricity_kwh=ep_results_sql.get_total_sold_electricity_kwh(),
+            peak_electric_usage_W=ep_results_sql.get_peak_electric_watts(),
+            electricity=electricity,
+            gas=gas,
+            grid_region=get_PhAdorbGridRegion_from_hb_model(hb_model_properties),
+            national_emissions=get_PhAdorbNationalEmissions_from_hb_mode(hb_model_properties),
+            analysis_duration=hb_model_properties.analysis_duration,
+            envelope_labor_cost_fraction=hb_model_properties.envelope_labor_cost_fraction,
+            measure_collection=get_PhAdorbCO2Measures_from_hb_model(hb_model_properties),
+            construction_collection=get_PhAdorbConstructions_from_hb_model(_hb_model),
+            equipment_collection=get_PhAdorbEquipment_from_hb_model(_hb_model),
+        )
+    except Exception as e:
+        msg = (
+            "An error occurred while reading data from the EnergyPlus SQL file? Please be sure that "
+            "you have set all of the required output-variables before running the EnergyPlus simulation"
+        )
+        raise Exception(msg, e)
 
     return revive_variant
