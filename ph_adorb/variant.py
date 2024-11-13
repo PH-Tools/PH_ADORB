@@ -289,8 +289,8 @@ def calc_equipment_yearly_install_costs(
 # ---------------------------------------------------------------------------------------
 
 
-def calc_variant_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path | None = None) -> pd.DataFrame:
-    """Return a DataFrame with the Variant's ADORB costs for each year of the analysis duration."""
+def calc_variant_yearly_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path | None = None) -> pd.DataFrame:
+    """Return a DataFrame with the Variant's yearly ADORB costs for each year of the analysis duration."""
 
     # -----------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------
@@ -415,3 +415,9 @@ def calc_variant_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path
         _variant.peak_electric_usage_W,
         _variant.price_of_carbon,
     )
+
+
+def calc_variant_cumulative_ADORB_costs(_df: pd.DataFrame) -> pd.DataFrame:
+    """Return a DataFrame with the Cumulative ADORB costs for each year of the analysis duration."""
+    cumulative_df = _df.cumsum(axis=0)
+    return cumulative_df
