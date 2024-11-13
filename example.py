@@ -11,7 +11,7 @@ provide the relevant inputs (HBJSON) and the outputs should be saved to a local 
 from pathlib import Path
 
 from ph_adorb.from_HBJSON import create_variant, read_HBJSON_file
-from ph_adorb.variant import calc_variant_ADORB_costs
+from ph_adorb.variant import calc_variant_yearly_ADORB_costs
 
 # --- Input / Output file Path
 # -------------------------------------------------------------------------
@@ -36,7 +36,9 @@ if __name__ == "__main__":
 
     # --- Get the ADORB Costs for the PH-ADORB-Variant
     # -------------------------------------------------------------------------
-    variant_ADORB_df = calc_variant_ADORB_costs(revive_variant, _output_tables_path=Path("tests/_test_output/tables"))
+    variant_ADORB_df = calc_variant_yearly_ADORB_costs(
+        revive_variant, _output_tables_path=Path("tests/_test_output/tables")
+    )
 
     # --- Output the ADORB Costs to a CSV File
     # -------------------------------------------------------------------------
