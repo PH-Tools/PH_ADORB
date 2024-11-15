@@ -231,18 +231,19 @@ def get_PhAdorbVariant_from_hb_model(_hb_model: Model, _results_sql_file_path: P
 
     # -----------------------------------------------------------------------------------
     # -- Setup the Variant's Fuel Types and Costs
+    # TODO: Make this user-inputs
     electricity = PhAdorbFuel(
         fuel_type=PhAdorbFuelType.ELECTRICITY,
-        purchase_price_per_kwh=0.102,
-        sale_price_per_kwh=0.6,
-        annual_base_price=100.0,
+        purchase_price_per_kwh=0.17984,
+        sale_price_per_kwh=0.132,
+        annual_base_price=200.0,
         used=True,
     )
     gas = PhAdorbFuel(
         fuel_type=PhAdorbFuelType.NATURAL_GAS,
-        purchase_price_per_kwh=0.102,
+        purchase_price_per_kwh=0.0471,
         sale_price_per_kwh=0.0,
-        annual_base_price=480.0,
+        annual_base_price=200.0,
         used=True,
     )
 
