@@ -16,9 +16,19 @@ import shutil
 import sys
 from pathlib import Path
 from collections import namedtuple
+import logging
+from logging import getLogger
 
 from ph_adorb.from_HBJSON import create_variant, read_HBJSON_file
 from ph_adorb.variant import calc_variant_yearly_ADORB_costs, calc_variant_cumulative_ADORB_costs
+
+
+# Function to setup logger to output to a log file
+def setup_logger(log_file_path: Path, _level: int = logging.INFO) -> logging.Logger:
+    logging.basicConfig(
+        filename=log_file_path, filemode="w", level=_level, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
+    return getLogger(__name__)
 
 
 class InputFileError(Exception):
@@ -118,6 +128,13 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
     print("\t>> Resolving file paths...")
     file_paths = resolve_paths(sys.argv)
+
+    # Setup logger to output to the same directory as the 'file_paths.annual_csv' location
+    log_file_path = file_paths.annual_csv.parent / "calc_HBJSON_ADORB_costs.log"
+    logger = setup_logger(log_file_path, logging.DEBUG)
+
+    logger.info("Script started")
+
     print(f"\t>> Source HBJSON File: '{file_paths.hbjson}'")
     print(f"\t>> Source SQL File: '{file_paths.sql}'")
     print(f"\t>> Target CSV File (yearly): '{file_paths.annual_csv}'")
@@ -148,3 +165,4 @@ if __name__ == "__main__":
     variant_cumulative_ADORB_df.to_csv(file_paths.cumulative_csv)
     print("\t>> Done calculating the ADORB Costs. The CSV files have been saved.")
     print("- " * 50)
+    logger.info("Script finished")
