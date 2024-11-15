@@ -4,6 +4,7 @@
 """A Building Variant with all of its relevant data, and related functions."""
 
 from pathlib import Path
+import logging
 
 import pandas as pd
 from pydantic import BaseModel, Field
@@ -26,6 +27,8 @@ from ph_adorb.tables.variant import (
     preview_yearly_install_costs,
 )
 from ph_adorb.yearly_values import YearlyCost, YearlyKgCO2
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------------------
 
@@ -86,10 +89,23 @@ def calc_annual_total_electric_cost(
     _electric_annual_base_price: float,
 ) -> float:
     """Return the total annual electricity cost for the building."""
+    logger.info("calc_annual_total_electric_cost()")
 
     total_purchased_electric_cost = _purchased_electricity_kwh * _electric_purchase_price_per_kwh
     total_sold_electric_cost = _sold_electricity_kwh * _electric_sell_price_per_kwh
     total_annual_electric_cost = total_purchased_electric_cost - total_sold_electric_cost + _electric_annual_base_price
+
+    # ------------------------------------------------------------------------------------------------------------------
+    logger.debug(
+        f"total_purchased_electric_cost: {total_purchased_electric_cost} = {_purchased_electricity_kwh} * {_electric_purchase_price_per_kwh}"
+    )
+    logger.debug(
+        f"total_sold_electric_cost: {total_sold_electric_cost} = {_sold_electricity_kwh} * {_electric_sell_price_per_kwh}"
+    )
+    logger.debug(
+        f"total_annual_electric_cost: {total_annual_electric_cost} = {total_purchased_electric_cost} - {total_sold_electric_cost} + {_electric_annual_base_price}"
+    )
+
     return total_annual_electric_cost
 
 
@@ -116,26 +132,39 @@ def calc_annual_total_gas_cost(
     _gas_annual_base_price: float,
 ) -> float:
     """Return the total annual gas cost for the building."""
+    logger.info("calc_annual_total_gas_cost()")
 
     if not _gas_used:
         return 0.0
 
-    return (_total_purchased_gas_kwh * _gas_purchase_price_per_kwh) + _gas_annual_base_price
+    total_annual_gas_cost = (_total_purchased_gas_kwh * _gas_purchase_price_per_kwh) + _gas_annual_base_price
+
+    # ------------------------------------------------------------------------------------------------------------------
+    logger.debug(
+        f"total_annual_gas_cost: {total_annual_gas_cost} = {_total_purchased_gas_kwh} * {_gas_purchase_price_per_kwh} + {_gas_annual_base_price}"
+    )
+    return total_annual_gas_cost
 
 
 def calc_annual_total_gas_CO2(
     _total_purchased_gas_kwh: float,
     _gas_used: bool,
 ) -> float:
+    logger.info("calc_annual_total_gas_CO2()")
 
     # TODO: What is this '12.7' constant?
-    SOME_CONSTANT = 12.7
+    # SOME_CONSTANT = 12.7
     TONS_CO2_PER_KWH = 0.0341
 
     if not _gas_used:
+        logger.debug("annual_tons_gas_CO2=0.0 [_gas_used=False]")
         return 0.0
 
-    return TONS_CO2_PER_KWH * _total_purchased_gas_kwh * SOME_CONSTANT
+    annual_tons_gas_CO2 = TONS_CO2_PER_KWH * _total_purchased_gas_kwh  # TODO: is this needed? * SOME_CONSTANT
+
+    # ------------------------------------------------------------------------------------------------------------------
+    logger.debug(f"annual_tons_gas_CO2: {annual_tons_gas_CO2} = {TONS_CO2_PER_KWH} * {_total_purchased_gas_kwh}")
+    return annual_tons_gas_CO2
 
 
 # ---------------------------------------------------------------------------------------
@@ -147,6 +176,8 @@ def calc_CO2_reduction_measures_yearly_embodied_kgCO2(
     _kg_CO2_per_USD: float,
 ) -> list[YearlyKgCO2]:
     """Return a list of all the Yearly-Embodied-kgCO2 for all the Variant's CO2-Reduction-Measures."""
+
+    logger.info("calc_CO2_reduction_measures_yearly_embodied_kgCO2()")
 
     # -------------------------------------------------------------------------------
     # TODO: CHANGE TO USE COUNTRY INDEX, 0 for US,
@@ -165,6 +196,8 @@ def calc_CO2_reduction_measures_yearly_embodied_CO2_cost(
     _yearly_embodied_kgCO2_: list[YearlyKgCO2], _USD_per_kgCO2=0.25
 ) -> list[YearlyCost]:
     """Return a list of all the Yearly-Embodied-CO2-Costs for all the Variant's CO2-Reduction-Measures."""
+    logger.info("calc_CO2_reduction_measures_yearly_embodied_CO2_cost()")
+
     return [
         YearlyCost(yearly_kgCO2.kg_CO2 * _USD_per_kgCO2, yearly_kgCO2.year, yearly_kgCO2.description)
         for yearly_kgCO2 in _yearly_embodied_kgCO2_
@@ -191,6 +224,8 @@ def calc_CO2_reduction_measures_yearly_install_costs(
     _variant_CO2_measures: PhAdorbCO2MeasureCollection,
 ) -> list[YearlyCost]:
     """Return a list of all the Yearly-Install-Costs (labor + material) for all the Variant's CO2-Reduction-Measures."""
+    logger.info("calc_CO2_reduction_measures_yearly_install_costs()")
+
     return [YearlyCost(measure.cost, measure.year, measure.name) for measure in _variant_CO2_measures]
 
 
@@ -202,6 +237,8 @@ def calc_constructions_yearly_embodied_kgCO2(
     _construction_collection: PhAdorbConstructionCollection, _analysis_duration, _kg_CO2_per_USD, _USD_per_kgCO2=0.25
 ) -> list[YearlyKgCO2]:
     """Return a list of all the Yearly-Embodied-CO2-Costs for all the Variant's Construction Materials."""
+    logger.info("calc_constructions_yearly_embodied_kgCO2()")
+
     yearly_embodied_kgCO2_: list[YearlyKgCO2] = []
     for const in _construction_collection:
         const_material_dollar_cost: float = const.cost * const.material_fraction
@@ -219,6 +256,8 @@ def calc_constructions_yearly_embodied_CO2_cost(
     _yearly_embodied_kgCO2_: list[YearlyKgCO2], _USD_per_kgCO2=0.25
 ) -> list[YearlyCost]:
     """Return a list of all the Yearly-Embodied-CO2-Costs for all the Variant's Construction Materials."""
+    logger.info("calc_constructions_yearly_embodied_CO2_cost()")
+
     return [
         YearlyCost(yearly_kgCO2.kg_CO2 * _USD_per_kgCO2, yearly_kgCO2.year, yearly_kgCO2.description)
         for yearly_kgCO2 in _yearly_embodied_kgCO2_
@@ -230,6 +269,8 @@ def calc_constructions_yearly_install_costs(
     _analysis_duration,
 ) -> list[YearlyCost]:
     """Return a list of all the Yearly-Install-Costs (labor + material) for all the Variant's Constructions."""
+    logger.info("calc_constructions_yearly_install_costs()")
+
     yearly_install_costs_ = []
     for const in _construction_collection:
         if const.lifetime_years == 0:
@@ -248,6 +289,8 @@ def calc_equipment_yearly_embodied_kgCO2_(
     _equipment_collection: PhAdorbEquipmentCollection, _analysis_duration, _kg_CO2_per_USD
 ) -> list[YearlyKgCO2]:
     """Return a list of all the Yearly-Embodied-kgCO2 for all the Variant's Equipment."""
+    logger.info("calc_equipment_yearly_embodied_kgCO2_()")
+
     yearly_embodied_kgCO2_: list[YearlyKgCO2] = []
     for equip in _equipment_collection:
         equip_material_cost: float = equip.cost * equip.material_fraction
@@ -265,6 +308,8 @@ def calc_equipment_yearly_embodied_CO2_cost(
     _yearly_embodied_kgCO2_: list[YearlyKgCO2], _USD_per_kgCO2=0.25
 ) -> list[YearlyCost]:
     """Return a list of all the Yearly-Embodied-CO2-Costs for all the Variant's Equipment."""
+    logger.info("calc_equipment_yearly_embodied_CO2_cost()")
+
     return [
         YearlyCost(yearly_kgCO2.kg_CO2 * _USD_per_kgCO2, yearly_kgCO2.year, yearly_kgCO2.description)
         for yearly_kgCO2 in _yearly_embodied_kgCO2_
@@ -276,6 +321,8 @@ def calc_equipment_yearly_install_costs(
     _analysis_duration,
 ) -> list[YearlyCost]:
     """Return a list of all the Yearly-Install-Costs (labor + material) for all the Variant's Equipment."""
+    logger.info("calc_equipment_yearly_install_costs()")
+
     yearly_install_costs_ = []
     for equip in _equipment_collection:
         if equip.lifetime_years == 0:
@@ -291,6 +338,7 @@ def calc_equipment_yearly_install_costs(
 
 def calc_variant_yearly_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path | None = None) -> pd.DataFrame:
     """Return a DataFrame with the Variant's yearly ADORB costs for each year of the analysis duration."""
+    logger.info("calc_variant_yearly_ADORB_costs()")
 
     # -----------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------
@@ -419,5 +467,7 @@ def calc_variant_yearly_ADORB_costs(_variant: PhAdorbVariant, _output_tables_pat
 
 def calc_variant_cumulative_ADORB_costs(_df: pd.DataFrame) -> pd.DataFrame:
     """Return a DataFrame with the Cumulative ADORB costs for each year of the analysis duration."""
+    logger.info("calc_variant_cumulative_ADORB_costs()")
+
     cumulative_df = _df.cumsum(axis=0)
     return cumulative_df
