@@ -28,3 +28,14 @@ class YearlyKgCO2:
 
     def __repr__(self) -> str:
         return f"YearlyKgCO2(kg_CO2={self.kg_CO2 :.1f}, year={self.year}, description={self.description})"
+
+
+@dataclass
+class YearlyPresentValueFactor:
+    """A single Yearly Present Value Factor for a building design."""
+
+    factor: float
+    year: int
+
+    def __repr__(self) -> str:
+        return f"YearlyPresentValueFactor(pv_factor={self.factor :.3f}, year={self.year})"

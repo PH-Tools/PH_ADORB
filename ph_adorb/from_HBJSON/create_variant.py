@@ -49,7 +49,7 @@ from ph_adorb.ep_sql_file import DataFileSQL
 from ph_adorb.equipment import PhAdorbEquipment, PhAdorbEquipmentCollection, PhAdorbEquipmentType
 from ph_adorb.fuel import PhAdorbFuel, PhAdorbFuelType
 from ph_adorb.grid_region import PhAdorbGridRegion, load_CO2_factors_from_json_file
-from ph_adorb.measures import PhAdorbCO2MeasureCollection, PhAdorbCO2ReductionMeasure
+from ph_adorb.measures import PhAdorbCO2MeasureCollection, PhAdorbCO2ReductionMeasure, CO2MeasureType
 from ph_adorb.national_emissions import PhAdorbNationalEmissions
 from ph_adorb.variant import PhAdorbVariant
 
@@ -83,7 +83,7 @@ def get_PhAdorbCO2Measures_from_hb_model(_hb_model_prop: ModelReviveProperties) 
     for co2_measure in _hb_model_prop.co2_measures:
         measure_collection_.add_measure(
             PhAdorbCO2ReductionMeasure(
-                measure_type=co2_measure.measure_type,
+                measure_type=CO2MeasureType(co2_measure.measure_type),
                 name=co2_measure.name,
                 year=co2_measure.year,
                 cost=co2_measure.cost,
@@ -198,17 +198,6 @@ def get_PhAdorbEquipment_from_hb_model(_hb_model: Model) -> PhAdorbEquipmentColl
         if not shade_prop_e.pv_properties:
             continue
         equipment_collection_.add_equipment(convert_hb_shade_pv(shade_prop_e.pv_properties))
-
-    # TODO: Batteries....
-    equipment_collection_.add_equipment(
-        PhAdorbEquipment(
-            name="Battery",
-            equipment_type=PhAdorbEquipmentType.BATTERY,
-            cost=3_894.54,
-            lifetime_years=10,
-            labor_fraction=0.5,
-        )
-    )
 
     return equipment_collection_
 

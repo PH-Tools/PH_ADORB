@@ -49,6 +49,26 @@ def rich_table_to_html(_tbl: Table) -> str:
     return html_
 
 
+def add_total_row(tbl_: Table) -> None:
+    """Add a total row to the table if it contains numeric columns."""
+    if tbl_.row_count == 0:
+        return
+
+    total_row = ["Total"]
+    for col_idx in range(1, len(tbl_.columns)):
+        try:
+            total = sum(
+                float(str(tbl_.columns[col_idx]._cells[row_idx]).replace(",", ""))
+                for row_idx in range(tbl_.row_count)
+                if str(tbl_.columns[col_idx]._cells[row_idx]).replace(",", "").replace(".", "").isdigit()
+            )
+            total_row.append(f"{total:,.0f}")
+        except ValueError:
+            total_row.append("-")
+
+    tbl_.add_row(*total_row, style="bold")
+
+
 def preview_hourly_electric_and_CO2(
     _hourly_kwh: list[float], _hourly_CO2_factors: dict[int, list[float]], _output_path: Path | None
 ) -> None:
@@ -63,8 +83,10 @@ def preview_hourly_electric_and_CO2(
     for i, kwh in enumerate(_hourly_kwh):
         factors_by_year: list[str] = []
         for yearly_factors in _hourly_CO2_factors.values():
-            factors_by_year.append(f"{yearly_factors[i]:,.2f}")
+            factors_by_year.append(f"{yearly_factors[i]:,.0f}")
         tbl_.add_row(f"{i:04d}", f"{kwh:,.2f}", *factors_by_year)
+
+    add_total_row(tbl_)
 
     # Output the table to the console or write to a file
     if _output_path:
@@ -105,13 +127,15 @@ def preview_yearly_energy_and_CO2(
 
         tbl_.add_row(
             f"{2023+i:02d}",
-            f"{_elec_kwh:,.2f}",
-            f"{co2:,.2f}",
+            f"{_elec_kwh:,.0f}",
+            f"{co2:,.0f}",
             f"{elec_grid_factor:,.3f}",
-            f"{_gas_kwh:,.2f}",
-            f"{_gas_CO2:,.2f}",
+            f"{_gas_kwh:,.0f}",
+            f"{_gas_CO2:,.0f}",
             f"{gas_grid_factor:,.3f}",
         )
+
+    add_total_row(tbl_)
 
     # Output the table to the console or write to a file
     if _output_path:
@@ -142,11 +166,13 @@ def preview_variant_co2_measures(
             measure.name,
             measure.measure_type.name,
             f"{measure.year}",
-            f"{measure.cost:,.2f}",
+            f"{measure.cost:,.0f}",
             f"{measure.kg_CO2:.0f}" if measure.kg_CO2 is not None else "-",
             f"{measure.country_name}",
             f"{measure.labor_fraction * 100.0 :.0f}",
         )
+
+    add_total_row(tbl_)
 
     # Output the table to the console or write to a file
     if _output_path:
@@ -159,6 +185,7 @@ def preview_variant_co2_measures(
 
 
 def preview_variant_equipment(_equipment_collection: PhAdorbEquipmentCollection, _output_path: Path | None) -> None:
+    """Preview the variant equipment in a table."""
     # Create the table
     tbl_ = Table(title="Variant Equipment", show_lines=True)
     tbl_.add_column("Equipment/Appliance", style="cyan", justify="center", min_width=20, no_wrap=True)
@@ -172,10 +199,12 @@ def preview_variant_equipment(_equipment_collection: PhAdorbEquipmentCollection,
         tbl_.add_row(
             equipment.name,
             equipment.equipment_type.name,
-            f"{equipment.cost:,.2f}",
+            f"{equipment.cost:,.0f}",
             f"{equipment.lifetime_years:.0f}",
             f"{equipment.labor_fraction * 100.0 :.0f}",
         )
+
+    add_total_row(tbl_)
 
     # Output the table to the console or write to a file
     if _output_path:
@@ -206,14 +235,16 @@ def preview_variant_constructions(
 
         tbl_.add_row(
             construction.display_name,
-            f"{construction.area_m2:,.2f}",
+            f"{construction.area_m2:,.1f}",
             f"{construction.cost_per_m2:,.2f}",
-            f"{construction.cost:,.2f}",
+            f"{construction.cost:,.0f}",
             f"{construction.CO2_kg_per_m2:,.2f}",
-            f"{construction.CO2_kg:,.2f}",
+            f"{construction.CO2_kg:,.0f}",
             f"{construction.lifetime_years:.0f}",
             f"{construction.labor_fraction * 100.0 :.0f}",
         )
+
+    add_total_row(tbl_)
 
     # Output the table to the console or write to a file
     if _output_path:
@@ -246,9 +277,11 @@ def preview_yearly_install_costs(_input: list[YearlyCost], _output_path: Path | 
 
     for description, costs in grouped_data.items():
         row = [description] + [
-            f"{costs.get(year, 0):,.2f}" if costs.get(year, 0) != 0 else "-" for year in sorted_years
+            f"{costs.get(year, 0):,.0f}" if costs.get(year, 0) != 0 else "-" for year in sorted_years
         ]
         tbl_.add_row(*row)
+
+    add_total_row(tbl_)
 
     if _output_path:
         html_table = rich_table_to_html(tbl_)
@@ -280,9 +313,11 @@ def preview_yearly_embodied_kgCO2(_input: list[YearlyKgCO2], _output_path: Path 
 
     for description, costs in grouped_data.items():
         row = [description] + [
-            f"{costs.get(year, 0):,.2f}" if costs.get(year, 0) != 0 else "-" for year in sorted_years
+            f"{costs.get(year, 0):,.0f}" if costs.get(year, 0) != 0 else "-" for year in sorted_years
         ]
         tbl_.add_row(*row)
+
+    add_total_row(tbl_)
 
     if _output_path:
         html_table = rich_table_to_html(tbl_)
@@ -314,9 +349,11 @@ def preview_yearly_embodied_CO2_costs(_input: list[YearlyCost], _output_path: Pa
 
     for description, costs in grouped_data.items():
         row = [description] + [
-            f"{costs.get(year, 0):,.2f}" if costs.get(year, 0) != 0 else "-" for year in sorted_years
+            f"{costs.get(year, 0):,.0f}" if costs.get(year, 0) != 0 else "-" for year in sorted_years
         ]
         tbl_.add_row(*row)
+
+    add_total_row(tbl_)
 
     if _output_path:
         html_table = rich_table_to_html(tbl_)
