@@ -8,6 +8,7 @@ import logging
 
 import pandas as pd
 from pydantic import BaseModel, Field
+from ph_units.unit_type import Unit
 
 from ph_adorb import adorb_cost
 from ph_adorb.constructions import PhAdorbConstructionCollection
@@ -151,17 +152,16 @@ def calc_annual_total_gas_CO2(
 ) -> float:
     logger.info("calc_annual_total_gas_CO2()")
 
-    # TODO: What is this '12.7' constant?
-    # SOME_CONSTANT = 12.7
-    TONS_CO2_PER_KWH = 0.0341
+    TONS_CO2_PER_THERM_GAS = 12.7
 
     if not _gas_used:
         return 0.0
 
-    annual_tons_gas_CO2 = TONS_CO2_PER_KWH * _total_purchased_gas_kwh  # TODO: is this needed? * SOME_CONSTANT
+    annual_therms_gas = Unit(_total_purchased_gas_kwh, "KWH").as_a("THERM").value
+    annual_tons_gas_CO2 = annual_therms_gas * TONS_CO2_PER_THERM_GAS
 
     logger.debug(
-        f"Gas CO2: {TONS_CO2_PER_KWH} tCO2/kWh * {_total_purchased_gas_kwh :,.0f}kWh = {annual_tons_gas_CO2 :,.0f}"
+        f"Gas CO2: {_total_purchased_gas_kwh :,.0f} kWH -> {annual_therms_gas :,.0f} Therms * {TONS_CO2_PER_THERM_GAS} = {annual_tons_gas_CO2 :,.0f} tons CO2"
     )
 
     return annual_tons_gas_CO2
@@ -462,6 +462,7 @@ def calc_variant_yearly_ADORB_costs(_variant: PhAdorbVariant, _output_tables_pat
     )
 
     if _output_tables_path:
+        logger.info(f"Saving ADORB Tables to: {_output_tables_path}")
         preview_hourly_electric_and_CO2(
             _variant.hourly_purchased_electricity_kwh,
             _variant.grid_region.hourly_CO2_factors,

@@ -28,9 +28,14 @@ class DataFileSQL(BaseModel):
         conn = sqlite3.connect(self.source_file_path)
         try:
             c = conn.cursor()
+            # Note: I am not sure which of these two is the right one to use.
+            # c.execute(
+            #     "SELECT MAX(Value) FROM 'ReportVariableWithTime' "
+            #     "WHERE Name='Facility Total Building Electricity Demand Rate'"
+            # )
             c.execute(
-                "SELECT MAX(Value) FROM 'ReportVariableWithTime' "
-                "WHERE Name='Facility Total Building Electricity Demand Rate'"
+                "SELECT Value FROM TabularDataWithStrings WHERE ReportName='DemandEndUseComponentsSummary' "
+                "AND ColumnName='Electricity' AND RowName='Total End Uses'"
             )
             peak_electric_watts_ = c.fetchone()[0]
         except Exception as e:

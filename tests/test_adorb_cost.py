@@ -177,7 +177,7 @@ phius_gui_all_yearly_embodied_kgCO2 = [
     YearlyCost(11.699999999999998, 13),
     YearlyCost(11.699999999999998, 26),
     YearlyCost(11.699999999999998, 39),
-    YearlyCost(0, 0),  # <-------------------- (nan, 0)?
+    YearlyCost(0, 0),
     YearlyCost(30.381975000000004, 0),
     YearlyCost(30.381975000000004, 17),
     YearlyCost(30.381975000000004, 34),
@@ -203,6 +203,14 @@ phius_gui_all_yearly_embodied_kgCO2 = [
 phius_gui_grid_transition_cost = 3009.76
 
 
+def test_present_value_factor():
+    assert present_value_factor(0, 0).factor == 1
+    assert present_value_factor(1, 0).factor == 1
+    assert present_value_factor(1, 0.02).factor == 1.0404
+    assert present_value_factor(-1, 0.02).factor == 1.0
+    assert present_value_factor(15, 0.02).factor == 1.3727857050906125
+
+
 def test__adorb_cost_works_with_phius_gui_data():
     result = calculate_annual_ADORB_costs(
         50,
@@ -220,7 +228,7 @@ def test__adorb_cost_works_with_phius_gui_data():
     assert result["pv_direct_energy"].sum() == approx(90_750.73699703957)
     assert result["pv_operational_CO2"].sum() == approx(44_516.49666105372)
     assert result["pv_direct_MR"].sum() == approx(73_733.73329487)
-    assert result["pv_embodied_CO2"].sum() == approx(1_260.9522315000002)
+    assert result["pv_embodied_CO2"].sum() == approx(6_030.867828375)
     assert result["pv_e_trans"].sum() == approx(6_319.495880549157)
 
 
@@ -245,8 +253,8 @@ def test_pv_direct_maintenance_cost():
 
 def test_pv_embodied_CO2_cost():
     costs = [YearlyCost(0, 0), YearlyCost(1, 1), YearlyCost(2, 2), YearlyCost(3, 3)]
-    assert measure_CO2_cost_PV(present_value_factor(0, 0.02), costs) == approx(0.7352941176470588)
-    assert measure_CO2_cost_PV(present_value_factor(1, 0.02), costs) == approx(1.4417531718569783)
+    assert measure_CO2_cost_PV(present_value_factor(0, 0.02), costs) == approx(0)
+    assert measure_CO2_cost_PV(present_value_factor(1, 0.02), costs) == approx(0.7208765859284891)
     assert measure_CO2_cost_PV(present_value_factor(-1, 0.02), costs) == 0
 
 

@@ -128,8 +128,9 @@ def measure_CO2_cost_PV(
     measure_costs = [
         yearly_cost.cost
         for yearly_cost in _carbon_measure_embodied_CO2_yearly_costs
-        if yearly_cost.year == _pv_factor.year
+        if yearly_cost.year == _pv_factor.year - 1
     ]
+
     if not measure_costs:
         return 0.0
 
@@ -144,7 +145,7 @@ def measure_CO2_cost_PV(
     return total_measure_PV_cost
 
 
-def grid_transition_cost_PV(_pv_factor: YearlyPresentValueFactor, _grid_transition_cost: float) -> float:
+def grid_transition_cost_PV(_pv_factor: YearlyPresentValueFactor, _peak_electrical_W: float) -> float:
     """Calculate the total grid transition cost for a given year."""
     logger.info(f"grid_transition_PV_cost(year={_pv_factor.year}, factor={_pv_factor.factor :.3f})")
 
@@ -157,11 +158,11 @@ def grid_transition_cost_PV(_pv_factor: YearlyPresentValueFactor, _grid_transiti
     if _pv_factor.factor == 0:
         return 0.0
 
-    transition_cost = year_transition_cost_factor * _grid_transition_cost
+    transition_cost = year_transition_cost_factor * _peak_electrical_W
     transition_PV_cost = transition_cost / _pv_factor.factor
 
     logger.debug(
-        f"Transition Cost [{_pv_factor.year}]: {year_transition_cost_factor: .0f} * ${_grid_transition_cost :,.0f} = ${transition_cost :,.0f}"
+        f"Transition Cost [{_pv_factor.year}]: {year_transition_cost_factor: .5f} * {_peak_electrical_W :,.0f} W = ${transition_cost :,.0f}"
     )
     logger.debug(
         f"Transition PV Cost [{_pv_factor.year}]: ${transition_cost :,.0f} / {_pv_factor.factor :.3f} = PV${transition_PV_cost :,.0f}"
@@ -178,7 +179,7 @@ def calculate_annual_ADORB_costs(
     _annual_total_CO2_gas: float,
     _all_yearly_install_costs: list[YearlyCost],
     _all_yearly_embodied_kgCO2: list[YearlyCost],
-    _grid_transition_cost: float,
+    _peak_electrical_W: float,
     _price_of_carbon: float,
 ) -> pd.DataFrame:
     """Returns a DataFrame with the yearly costs from the ADORB analysis."""
@@ -207,7 +208,7 @@ def calculate_annual_ADORB_costs(
                 ),
                 columns[2]: measure_purchase_cost_PV(present_value_factor(n, 0.02), _all_yearly_install_costs),
                 columns[3]: measure_CO2_cost_PV(present_value_factor(n, 0.0), _all_yearly_embodied_kgCO2),
-                columns[4]: grid_transition_cost_PV(present_value_factor(n, 0.02), _grid_transition_cost),
+                columns[4]: grid_transition_cost_PV(present_value_factor(n, 0.02), _peak_electrical_W),
             }
         )
         rows.append(new_row)
