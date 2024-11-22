@@ -30,7 +30,7 @@ dependencies = [
     "honeybee-revive>=0.0.9",
     "pandas>=2.2.3",
     "plotly>=5.24.1",
-    "ph-units>=1.5.16",
+    "ph-units>=1.5.17",
     "rich>=13.8.1",
 ]
 [project.optional-dependencies]
