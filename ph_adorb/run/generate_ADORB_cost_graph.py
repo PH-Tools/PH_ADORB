@@ -83,7 +83,6 @@ if __name__ == "__main__":
     df = pd.read_csv(file_paths.csv)
 
     # -------------------------------------------------------------------------
-    # TODO:...
     fig = go.Figure()
     fig.update_layout(title="test")
     # Add each category as a trace
