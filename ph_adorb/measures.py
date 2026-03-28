@@ -78,14 +78,20 @@ class PhAdorbCO2MeasureCollection(BaseModel):
         return new_collection
 
 
-def write_CO2_measures_to_json_file(_file_path: Path, measures: dict[str, PhAdorbCO2ReductionMeasure]) -> None:
+def write_CO2_measures_to_json_file(
+    _file_path: Path, measures: dict[str, PhAdorbCO2ReductionMeasure]
+) -> None:
     """Write all of the CO2 Measure-Types to a JSON file."""
     with open(_file_path, "w") as json_file:
-        json.dump([_.dict() for _ in measures.values()], json_file, indent=4)
+        json.dump([_.model_dump() for _ in measures.values()], json_file, indent=4)
 
 
-def load_CO2_measures_from_json_file(_file_path: Path) -> dict[str, PhAdorbCO2ReductionMeasure]:
+def load_CO2_measures_from_json_file(
+    _file_path: Path,
+) -> dict[str, PhAdorbCO2ReductionMeasure]:
     """Load all of the CO2 Measure-Types from a JSON file."""
     with open(_file_path, "r") as json_file:
-        all_measures = (PhAdorbCO2ReductionMeasure(**item) for item in json.load(json_file))
+        all_measures = (
+            PhAdorbCO2ReductionMeasure(**item) for item in json.load(json_file)
+        )
         return {_.name: _ for _ in all_measures}

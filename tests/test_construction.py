@@ -77,15 +77,15 @@ def test_construction_to_json():
         lifetime_years=30,
         labor_fraction=0.4,
     )
-    json_str = construction.json()
+    json_str = construction.model_dump_json()
     assert (
         json_str
-        == '{"display_name": "Test Construction", "identifier": "Test Construction", "CO2_kg_per_m2": 100.0, "cost_per_m2": 1000.0, "lifetime_years": 30, "labor_fraction": 0.4, "area_m2": 0.0}'
+        == '{"display_name":"Test Construction","identifier":"Test Construction","CO2_kg_per_m2":100.0,"cost_per_m2":1000.0,"lifetime_years":30,"labor_fraction":0.4,"area_m2":0.0}'
     )
 
 
 def test_construction_from_json():
-    construction = PhAdorbConstruction.parse_obj(
+    construction = PhAdorbConstruction.model_validate(
         {
             "display_name": "Test Construction",
             "identifier": "Test Construction",
@@ -214,7 +214,9 @@ def test_constructions_json_file():
     constructions = [c1, c2]
 
     file_path = Path("temp.json")
-    write_constructions_to_json_file(file_path, {_.display_name: _ for _ in constructions})
+    write_constructions_to_json_file(
+        file_path, {_.display_name: _ for _ in constructions}
+    )
 
     # -- Read the JSON file back in
     constructions2 = load_constructions_from_json_file(file_path)

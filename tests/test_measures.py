@@ -38,15 +38,15 @@ def test_CO2ReductionMeasure_to_json():
         country_name="DE",
         labor_fraction=0.5,
     )
-    json_str = measure.json()
+    json_str = measure.model_dump_json()
     assert (
         json_str
-        == '{"measure_type": "PERFORMANCE", "name": "Test Measure", "year": 2023, "cost": 1000.0, "kg_CO2": 100.0, "country_name": "DE", "labor_fraction": 0.5}'
+        == '{"measure_type":"PERFORMANCE","name":"Test Measure","year":2023,"cost":1000.0,"kg_CO2":100.0,"country_name":"DE","labor_fraction":0.5}'
     )
 
 
 def test_CO2ReductionMeasure_from_json():
-    measure = PhAdorbCO2ReductionMeasure.parse_obj(
+    measure = PhAdorbCO2ReductionMeasure.model_validate(
         {
             "measure_type": "PERFORMANCE",
             "name": "Test Measure",

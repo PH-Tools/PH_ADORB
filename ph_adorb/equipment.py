@@ -74,10 +74,12 @@ class PhAdorbEquipmentCollection(BaseModel):
         return len(self._equipment)
 
 
-def write_equipment_to_json_file(_file_path: Path, equipment: dict[str, PhAdorbEquipment]) -> None:
+def write_equipment_to_json_file(
+    _file_path: Path, equipment: dict[str, PhAdorbEquipment]
+) -> None:
     """Write all of the Equipment-Types to a JSON file."""
     with open(_file_path, "w") as json_file:
-        json.dump([_.dict() for _ in equipment.values()], json_file, indent=4)
+        json.dump([_.model_dump() for _ in equipment.values()], json_file, indent=4)
 
 
 def load_equipment_from_json_file(_file_path: Path) -> dict[str, PhAdorbEquipment]:

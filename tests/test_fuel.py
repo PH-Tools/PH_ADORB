@@ -23,15 +23,15 @@ def test_fuel_to_json():
         annual_base_price=0.10,
         used=True,
     )
-    json_str = fuel.json()
+    json_str = fuel.model_dump_json()
     assert (
         json_str
-        == '{"fuel_type": "Electricity", "purchase_price_per_kwh": 0.12, "sale_price_per_kwh": 0.08, "annual_base_price": 0.1, "used": true}'
+        == '{"fuel_type":"Electricity","purchase_price_per_kwh":0.12,"sale_price_per_kwh":0.08,"annual_base_price":0.1,"used":true}'
     )
 
 
 def test_fuel_from_json():
-    fuel = PhAdorbFuel.parse_obj(
+    fuel = PhAdorbFuel.model_validate(
         {
             "fuel_type": "Electricity",
             "purchase_price_per_kwh": 0.12,

@@ -7,7 +7,7 @@ from pathlib import Path
 import logging
 
 import pandas as pd
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from ph_units.unit_type import Unit
 
 from ph_adorb import adorb_cost
@@ -49,19 +49,24 @@ class PhAdorbVariant(BaseModel):
     analysis_duration: int
     envelope_labor_cost_fraction: float
 
-    measure_collection: PhAdorbCO2MeasureCollection = Field(default_factory=PhAdorbCO2MeasureCollection)
-    construction_collection: PhAdorbConstructionCollection = Field(default_factory=PhAdorbConstructionCollection)
-    equipment_collection: PhAdorbEquipmentCollection = Field(default_factory=PhAdorbEquipmentCollection)
+    measure_collection: PhAdorbCO2MeasureCollection = Field(
+        default_factory=PhAdorbCO2MeasureCollection
+    )
+    construction_collection: PhAdorbConstructionCollection = Field(
+        default_factory=PhAdorbConstructionCollection
+    )
+    equipment_collection: PhAdorbEquipmentCollection = Field(
+        default_factory=PhAdorbEquipmentCollection
+    )
 
     price_of_carbon: float = 0.25
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @property
     def total_purchased_electricity_kwh(self) -> float:
         """Return the total annual purchased electricity in KWH."""
         return sum(self.hourly_purchased_electricity_kwh)
-
-    class Config:
-        arbitrary_types_allowed = True
 
     @property
     def all_carbon_measures(self) -> PhAdorbCO2MeasureCollection:
@@ -92,19 +97,25 @@ def calc_annual_total_electric_cost(
     """Return the total annual electricity cost for the building."""
     logger.info("calc_annual_total_electric_cost()")
 
-    total_purchased_electric_cost = _purchased_electricity_kwh * _electric_purchase_price_per_kwh
+    total_purchased_electric_cost = (
+        _purchased_electricity_kwh * _electric_purchase_price_per_kwh
+    )
     total_sold_electric_cost = _sold_electricity_kwh * _electric_sell_price_per_kwh
-    total_annual_electric_cost = total_purchased_electric_cost - total_sold_electric_cost + _electric_annual_base_price
+    total_annual_electric_cost = (
+        total_purchased_electric_cost
+        - total_sold_electric_cost
+        + _electric_annual_base_price
+    )
 
     # ------------------------------------------------------------------------------------------------------------------
     logger.debug(
-        f"Electric Purchased: {_purchased_electricity_kwh :,.0f}kWh * ${_electric_purchase_price_per_kwh :,.2f}/kWh = ${total_purchased_electric_cost :,.0f}"
+        f"Electric Purchased: {_purchased_electricity_kwh:,.0f}kWh * ${_electric_purchase_price_per_kwh:,.2f}/kWh = ${total_purchased_electric_cost:,.0f}"
     )
     logger.debug(
-        f"Electric Sold: {_sold_electricity_kwh :,.0f}kWh * ${_electric_sell_price_per_kwh :,.2f}/kWh = ${total_sold_electric_cost :,.0f}"
+        f"Electric Sold: {_sold_electricity_kwh:,.0f}kWh * ${_electric_sell_price_per_kwh:,.2f}/kWh = ${total_sold_electric_cost:,.0f}"
     )
     logger.debug(
-        f"Electric Net Cost: ${total_purchased_electric_cost :,.0f} - ${total_sold_electric_cost :,.0f} + ${_electric_annual_base_price :,.0f} = ${total_annual_electric_cost :,.0f}"
+        f"Electric Net Cost: ${total_purchased_electric_cost:,.0f} - ${total_sold_electric_cost:,.0f} + ${_electric_annual_base_price:,.0f} = ${total_annual_electric_cost:,.0f}"
     )
 
     return total_annual_electric_cost
@@ -121,7 +132,9 @@ def calc_annual_hourly_electric_CO2(
 
     # Multiply each year's factors by the hourly electric MWH list, and sum the results for each year.
     annual_hourly_electric_CO2: list[float] = (
-        (_grid_region.get_CO2_factors_as_df().multiply(hourly_electric_MWH, axis=0)).sum().tolist()
+        (_grid_region.get_CO2_factors_as_df().multiply(hourly_electric_MWH, axis=0))
+        .sum()
+        .tolist()
     )
     return annual_hourly_electric_CO2
 
@@ -138,10 +151,12 @@ def calc_annual_total_gas_cost(
     if not _gas_used:
         return 0.0
 
-    total_annual_gas_cost = (_total_purchased_gas_kwh * _gas_purchase_price_per_kwh) + _gas_annual_base_price
+    total_annual_gas_cost = (
+        _total_purchased_gas_kwh * _gas_purchase_price_per_kwh
+    ) + _gas_annual_base_price
 
     logger.debug(
-        f"Gas Cost: {_total_purchased_gas_kwh :,.0f}kWh * ${_gas_purchase_price_per_kwh :,.2f}/kWh + ${_gas_annual_base_price :,.0f} = ${total_annual_gas_cost :,.0f}"
+        f"Gas Cost: {_total_purchased_gas_kwh:,.0f}kWh * ${_gas_purchase_price_per_kwh:,.2f}/kWh + ${_gas_annual_base_price:,.0f} = ${total_annual_gas_cost:,.0f}"
     )
     return total_annual_gas_cost
 
@@ -161,7 +176,7 @@ def calc_annual_total_gas_CO2(
     annual_tons_gas_CO2 = annual_therms_gas * TONS_CO2_PER_THERM_GAS
 
     logger.debug(
-        f"Gas CO2: {_total_purchased_gas_kwh :,.0f} kWH -> {annual_therms_gas :,.0f} Therms * {TONS_CO2_PER_THERM_GAS} = {annual_tons_gas_CO2 :,.0f} tons CO2"
+        f"Gas CO2: {_total_purchased_gas_kwh:,.0f} kWH -> {annual_therms_gas:,.0f} Therms * {TONS_CO2_PER_THERM_GAS} = {annual_tons_gas_CO2:,.0f} tons CO2"
     )
 
     return annual_tons_gas_CO2
@@ -177,17 +192,21 @@ def calc_CO2_reduction_measures_yearly_embodied_kgCO2(
 ) -> list[YearlyKgCO2]:
     """Return a list of all the Yearly-Embodied-kgCO2 for all the Variant's CO2-Reduction-Measures."""
 
-    logger.info(f"calc_CO2_reduction_measures_yearly_embodied_kgCO2({len(_variant_CO2_measures)} measures)")
+    logger.info(
+        f"calc_CO2_reduction_measures_yearly_embodied_kgCO2({len(_variant_CO2_measures)} measures)"
+    )
 
     # TODO: CHANGE TO USE COUNTRY INDEX, 0 for US,
     yearly_embodied_kgCO2_: list[YearlyKgCO2] = []
 
     for measure in _variant_CO2_measures:
         measure_kgCO2 = measure.cost * _kg_CO2_per_USD
-        yearly_embodied_kgCO2_.append(YearlyKgCO2(measure_kgCO2, measure.year, measure.name))
+        yearly_embodied_kgCO2_.append(
+            YearlyKgCO2(measure_kgCO2, measure.year, measure.name)
+        )
 
         logger.debug(
-            f"CO2 Measure {measure.name} [YR-{measure.year}]: ${measure.cost :,.0f} * {_kg_CO2_per_USD :,.0f} kgCO2/USD = {measure_kgCO2 :,.0f}"
+            f"CO2 Measure {measure.name} [YR-{measure.year}]: ${measure.cost:,.0f} * {_kg_CO2_per_USD:,.0f} kgCO2/USD = {measure_kgCO2:,.0f}"
         )
 
     # TODO: Labor fraction should be subtracted out and have USA EF applied
@@ -205,10 +224,12 @@ def calc_CO2_reduction_measures_yearly_embodied_CO2_cost(
     for yearly_kgCO2 in _yearly_embodied_kgCO2_:
         CO2_cost = yearly_kgCO2.kg_CO2 * _USD_per_kgCO2
         logger.debug(
-            f"CO2 Measure {yearly_kgCO2.description} [YR-{yearly_kgCO2.year}]: {yearly_kgCO2.kg_CO2 :,.0f} kgCO2 * ${_USD_per_kgCO2 :,.2f}/kgCO2 = ${CO2_cost :,.0f}"
+            f"CO2 Measure {yearly_kgCO2.description} [YR-{yearly_kgCO2.year}]: {yearly_kgCO2.kg_CO2:,.0f} kgCO2 * ${_USD_per_kgCO2:,.2f}/kgCO2 = ${CO2_cost:,.0f}"
         )
 
-        yearly_CO2_costs_.append(YearlyCost(CO2_cost, yearly_kgCO2.year, yearly_kgCO2.description))
+        yearly_CO2_costs_.append(
+            YearlyCost(CO2_cost, yearly_kgCO2.year, yearly_kgCO2.description)
+        )
 
     return yearly_CO2_costs_
 
@@ -235,7 +256,10 @@ def calc_CO2_reduction_measures_yearly_install_costs(
     """Return a list of all the Yearly-Install-Costs (labor + material) for all the Variant's CO2-Reduction-Measures."""
     logger.info("calc_CO2_reduction_measures_yearly_install_costs()")
 
-    return [YearlyCost(measure.cost, measure.year, measure.name) for measure in _variant_CO2_measures]
+    return [
+        YearlyCost(measure.cost, measure.year, measure.name)
+        for measure in _variant_CO2_measures
+    ]
 
 
 # ---------------------------------------------------------------------------------------
@@ -243,7 +267,9 @@ def calc_CO2_reduction_measures_yearly_install_costs(
 
 
 def calc_constructions_yearly_embodied_kgCO2(
-    _construction_collection: PhAdorbConstructionCollection, _analysis_duration, _kg_CO2_per_USD
+    _construction_collection: PhAdorbConstructionCollection,
+    _analysis_duration,
+    _kg_CO2_per_USD,
 ) -> list[YearlyKgCO2]:
     """Return a list of all the Yearly-Embodied-CO2-Costs for all the Variant's Construction Materials."""
     logger.info("calc_constructions_yearly_embodied_kgCO2()")
@@ -251,17 +277,23 @@ def calc_constructions_yearly_embodied_kgCO2(
     yearly_embodied_kgCO2_: list[YearlyKgCO2] = []
     for const in _construction_collection:
         const_material_dollar_cost: float = const.cost * const.material_fraction
-        const_material_embodied_kgCO2: float = const_material_dollar_cost * _kg_CO2_per_USD
-
-        logger.debug(
-            f"Construction {const.display_name}: ${const_material_dollar_cost :,.0f} * {_kg_CO2_per_USD :,.2f} kgCO2/USD = {const_material_embodied_kgCO2 :,.0f} kgCO2"
+        const_material_embodied_kgCO2: float = (
+            const_material_dollar_cost * _kg_CO2_per_USD
         )
 
-        for year in range(0, _analysis_duration + 1, const.lifetime_years or (_analysis_duration + 1)):
+        logger.debug(
+            f"Construction {const.display_name}: ${const_material_dollar_cost:,.0f} * {_kg_CO2_per_USD:,.2f} kgCO2/USD = {const_material_embodied_kgCO2:,.0f} kgCO2"
+        )
+
+        for year in range(
+            0, _analysis_duration + 1, const.lifetime_years or (_analysis_duration + 1)
+        ):
             logger.debug(
-                f"Adding Construction {const.display_name} Embodied CO2 [lifetime={const.lifetime_years}yrs] {const_material_embodied_kgCO2 :,.0f} kgCO2 for year-{year}"
+                f"Adding Construction {const.display_name} Embodied CO2 [lifetime={const.lifetime_years}yrs] {const_material_embodied_kgCO2:,.0f} kgCO2 for year-{year}"
             )
-            yearly_embodied_kgCO2_.append(YearlyKgCO2(const_material_embodied_kgCO2, year, const.display_name))
+            yearly_embodied_kgCO2_.append(
+                YearlyKgCO2(const_material_embodied_kgCO2, year, const.display_name)
+            )
 
     return yearly_embodied_kgCO2_
 
@@ -276,10 +308,12 @@ def calc_constructions_yearly_embodied_CO2_cost(
     for yearly_kgCO2 in _yearly_embodied_kgCO2_:
         CO2_cost = yearly_kgCO2.kg_CO2 * _USD_per_kgCO2
         logger.debug(
-            f"Construction {yearly_kgCO2.description} Embodied CO2-Cost [YR-{yearly_kgCO2.year}]: {yearly_kgCO2.kg_CO2 :,.0f} kgCO2 * ${_USD_per_kgCO2 :,.2f}/kgCO2 = ${CO2_cost :,.0f}"
+            f"Construction {yearly_kgCO2.description} Embodied CO2-Cost [YR-{yearly_kgCO2.year}]: {yearly_kgCO2.kg_CO2:,.0f} kgCO2 * ${_USD_per_kgCO2:,.2f}/kgCO2 = ${CO2_cost:,.0f}"
         )
 
-        yearly_embodied_CO2_.append(YearlyCost(CO2_cost, yearly_kgCO2.year, yearly_kgCO2.description))
+        yearly_embodied_CO2_.append(
+            YearlyCost(CO2_cost, yearly_kgCO2.year, yearly_kgCO2.description)
+        )
 
     return yearly_embodied_CO2_
 
@@ -293,11 +327,15 @@ def calc_constructions_yearly_install_costs(
 
     yearly_install_costs_ = []
     for const in _construction_collection:
-        for year in range(0, _analysis_duration + 1, const.lifetime_years or (_analysis_duration + 1)):
+        for year in range(
+            0, _analysis_duration + 1, const.lifetime_years or (_analysis_duration + 1)
+        ):
             logger.debug(
-                f"Adding Construction {const.display_name} Install Cost: [lifetime={const.lifetime_years}yrs] ${const.cost :,.0f} for year-{year}"
+                f"Adding Construction {const.display_name} Install Cost: [lifetime={const.lifetime_years}yrs] ${const.cost:,.0f} for year-{year}"
             )
-            yearly_install_costs_.append(YearlyCost(const.cost, year, const.display_name))
+            yearly_install_costs_.append(
+                YearlyCost(const.cost, year, const.display_name)
+            )
     return yearly_install_costs_
 
 
@@ -306,7 +344,9 @@ def calc_constructions_yearly_install_costs(
 
 
 def calc_equipment_yearly_embodied_kgCO2_(
-    _equipment_collection: PhAdorbEquipmentCollection, _analysis_duration, _kg_CO2_per_USD
+    _equipment_collection: PhAdorbEquipmentCollection,
+    _analysis_duration,
+    _kg_CO2_per_USD,
 ) -> list[YearlyKgCO2]:
     """Return a list of all the Yearly-Embodied-kgCO2 for all the Variant's Equipment."""
     logger.info("calc_equipment_yearly_embodied_kgCO2_()")
@@ -317,14 +357,18 @@ def calc_equipment_yearly_embodied_kgCO2_(
         equip_material_embodied_CO2_cost: float = equip_material_cost * _kg_CO2_per_USD
 
         logger.debug(
-            f"Equipment {equip.name}: ${equip_material_cost :,.0f} * {_kg_CO2_per_USD :,.2f} kgCO2/USD = {equip_material_embodied_CO2_cost :,.0f} kgCO2"
+            f"Equipment {equip.name}: ${equip_material_cost:,.0f} * {_kg_CO2_per_USD:,.2f} kgCO2/USD = {equip_material_embodied_CO2_cost:,.0f} kgCO2"
         )
 
-        for year in range(0, _analysis_duration + 1, equip.lifetime_years or (_analysis_duration + 1)):
+        for year in range(
+            0, _analysis_duration + 1, equip.lifetime_years or (_analysis_duration + 1)
+        ):
             logger.debug(
-                f"Adding Equipment {equip.name} Embodied CO2 [lifetime={equip.lifetime_years}yrs] {equip_material_embodied_CO2_cost :,.0f} kgCO2 for year-{year}"
+                f"Adding Equipment {equip.name} Embodied CO2 [lifetime={equip.lifetime_years}yrs] {equip_material_embodied_CO2_cost:,.0f} kgCO2 for year-{year}"
             )
-            yearly_embodied_kgCO2_.append(YearlyKgCO2(equip_material_embodied_CO2_cost, year, equip.name))
+            yearly_embodied_kgCO2_.append(
+                YearlyKgCO2(equip_material_embodied_CO2_cost, year, equip.name)
+            )
 
     return yearly_embodied_kgCO2_
 
@@ -339,10 +383,12 @@ def calc_equipment_yearly_embodied_CO2_cost(
     for yearly_kgCO2 in _yearly_embodied_kgCO2_:
         CO2_cost = yearly_kgCO2.kg_CO2 * _USD_per_kgCO2
         logger.debug(
-            f"Equipment {yearly_kgCO2.description} Embodied CO2-Cost [YR-{yearly_kgCO2.year}]: {yearly_kgCO2.kg_CO2 :,.0f} kgCO2 * ${_USD_per_kgCO2 :,.2f}/kgCO2 = ${CO2_cost :,.0f}"
+            f"Equipment {yearly_kgCO2.description} Embodied CO2-Cost [YR-{yearly_kgCO2.year}]: {yearly_kgCO2.kg_CO2:,.0f} kgCO2 * ${_USD_per_kgCO2:,.2f}/kgCO2 = ${CO2_cost:,.0f}"
         )
 
-        yearly_embodied_CO2_cost_.append(YearlyCost(CO2_cost, yearly_kgCO2.year, yearly_kgCO2.description))
+        yearly_embodied_CO2_cost_.append(
+            YearlyCost(CO2_cost, yearly_kgCO2.year, yearly_kgCO2.description)
+        )
 
     return yearly_embodied_CO2_cost_
 
@@ -356,9 +402,11 @@ def calc_equipment_yearly_install_costs(
 
     yearly_install_costs_ = []
     for equip in _equipment_collection:
-        for year in range(0, _analysis_duration + 1, equip.lifetime_years or (_analysis_duration + 1)):
+        for year in range(
+            0, _analysis_duration + 1, equip.lifetime_years or (_analysis_duration + 1)
+        ):
             logger.debug(
-                f"Adding Equipment {equip.name} Install Cost: [lifetime={equip.lifetime_years}yrs] ${equip.cost :,.0f} for year-{year}"
+                f"Adding Equipment {equip.name} Install Cost: [lifetime={equip.lifetime_years}yrs] ${equip.cost:,.0f} for year-{year}"
             )
             yearly_install_costs_.append(YearlyCost(equip.cost, year, equip.name))
 
@@ -368,7 +416,9 @@ def calc_equipment_yearly_install_costs(
 # ---------------------------------------------------------------------------------------
 
 
-def calc_variant_yearly_ADORB_costs(_variant: PhAdorbVariant, _output_tables_path: Path | None = None) -> pd.DataFrame:
+def calc_variant_yearly_ADORB_costs(
+    _variant: PhAdorbVariant, _output_tables_path: Path | None = None
+) -> pd.DataFrame:
     """Return a DataFrame with the Variant's yearly ADORB costs for each year of the analysis duration."""
     logger.info("calc_variant_yearly_ADORB_costs()")
 
@@ -404,15 +454,21 @@ def calc_variant_yearly_ADORB_costs(_variant: PhAdorbVariant, _output_tables_pat
     # -----------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------
     # -- CO2-REDUCTION-MEASURES Costs
-    carbon_measure_yearly_embodied_kgCO2 = calc_CO2_reduction_measures_yearly_embodied_kgCO2(
-        _variant.all_carbon_measures,
-        _variant.national_emissions.kg_CO2_per_USD,
+    carbon_measure_yearly_embodied_kgCO2 = (
+        calc_CO2_reduction_measures_yearly_embodied_kgCO2(
+            _variant.all_carbon_measures,
+            _variant.national_emissions.kg_CO2_per_USD,
+        )
     )
-    carbon_measure_yearly_embodied_CO2_costs = calc_CO2_reduction_measures_yearly_embodied_CO2_cost(
-        carbon_measure_yearly_embodied_kgCO2,
-        _variant.price_of_carbon,
+    carbon_measure_yearly_embodied_CO2_costs = (
+        calc_CO2_reduction_measures_yearly_embodied_CO2_cost(
+            carbon_measure_yearly_embodied_kgCO2,
+            _variant.price_of_carbon,
+        )
     )
-    carbon_measure_yearly_install_costs = calc_CO2_reduction_measures_yearly_install_costs(_variant.all_carbon_measures)
+    carbon_measure_yearly_install_costs = (
+        calc_CO2_reduction_measures_yearly_install_costs(_variant.all_carbon_measures)
+    )
 
     # -----------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------
@@ -422,8 +478,10 @@ def calc_variant_yearly_ADORB_costs(_variant: PhAdorbVariant, _output_tables_pat
         _variant.analysis_duration,
         _variant.national_emissions.kg_CO2_per_USD,
     )
-    construction_yearly_embodied_CO2_costs = calc_constructions_yearly_embodied_CO2_cost(
-        construction_yearly_embodied_kgCO2, _variant.price_of_carbon
+    construction_yearly_embodied_CO2_costs = (
+        calc_constructions_yearly_embodied_CO2_cost(
+            construction_yearly_embodied_kgCO2, _variant.price_of_carbon
+        )
     )
     construction_yearly_install_costs = calc_constructions_yearly_install_costs(
         _variant.construction_collection,
@@ -450,10 +508,14 @@ def calc_variant_yearly_ADORB_costs(_variant: PhAdorbVariant, _output_tables_pat
     # -----------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------
     all_yearly_install_costs = (
-        carbon_measure_yearly_install_costs + construction_yearly_install_costs + equipment_yearly_install_costs
+        carbon_measure_yearly_install_costs
+        + construction_yearly_install_costs
+        + equipment_yearly_install_costs
     )
     all_yearly_embodied_kgCO2 = (
-        carbon_measure_yearly_embodied_kgCO2 + construction_yearly_embodied_kgCO2 + equipment_yearly_embodied_kgCO2_
+        carbon_measure_yearly_embodied_kgCO2
+        + construction_yearly_embodied_kgCO2
+        + equipment_yearly_embodied_kgCO2_
     )
     all_yearly_embodied_kgCO2_costs = (
         carbon_measure_yearly_embodied_CO2_costs
@@ -476,11 +538,15 @@ def calc_variant_yearly_ADORB_costs(_variant: PhAdorbVariant, _output_tables_pat
             _output_tables_path,
         )
         preview_variant_co2_measures(_variant.measure_collection, _output_tables_path)
-        preview_variant_constructions(_variant.construction_collection, _output_tables_path)
+        preview_variant_constructions(
+            _variant.construction_collection, _output_tables_path
+        )
         preview_variant_equipment(_variant.equipment_collection, _output_tables_path)
         preview_yearly_install_costs(all_yearly_install_costs, _output_tables_path)
         preview_yearly_embodied_kgCO2(all_yearly_embodied_kgCO2, _output_tables_path)
-        preview_yearly_embodied_CO2_costs(all_yearly_embodied_kgCO2_costs, _output_tables_path)
+        preview_yearly_embodied_CO2_costs(
+            all_yearly_embodied_kgCO2_costs, _output_tables_path
+        )
 
     # -----------------------------------------------------------------------------------
     # -----------------------------------------------------------------------------------

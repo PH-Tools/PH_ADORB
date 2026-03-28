@@ -68,7 +68,12 @@ class PhAdorbConstructionCollection(BaseModel):
         return self._constructions[key]
 
     def keys(self) -> list[str]:
-        return [k for k, v in sorted(self._constructions.items(), key=lambda x: x[1].display_name)]
+        return [
+            k
+            for k, v in sorted(
+                self._constructions.items(), key=lambda x: x[1].display_name
+            )
+        ]
 
     def values(self) -> list[PhAdorbConstruction]:
         return list(sorted(self._constructions.values(), key=lambda x: x.display_name))
@@ -84,7 +89,9 @@ class PhAdorbConstructionCollection(BaseModel):
             return key in self._constructions.values()
         return key in self._constructions
 
-    def set_constructions_ft2_quantities(self, _construction_quantities_ft2: dict[str, float]) -> None:
+    def set_constructions_ft2_quantities(
+        self, _construction_quantities_ft2: dict[str, float]
+    ) -> None:
         """Set the quantity (ft2) of each Construction.
 
         Args:
@@ -95,24 +102,36 @@ class PhAdorbConstructionCollection(BaseModel):
         def _clean_name(n: str) -> str:
             return n.upper().replace(" ", "_")
 
-        _construction_quantities_ft2 = {_clean_name(k): v for k, v in _construction_quantities_ft2.items()}
+        _construction_quantities_ft2 = {
+            _clean_name(k): v for k, v in _construction_quantities_ft2.items()
+        }
 
         old_constructions = list(self._constructions.values())
         self._constructions = {}
         for construction in old_constructions:
             new_construction = construction.duplicate()
-            new_construction.set_quantity_ft2(_construction_quantities_ft2[_clean_name(construction.display_name)])
+            new_construction.set_quantity_ft2(
+                _construction_quantities_ft2[_clean_name(construction.display_name)]
+            )
             self.add_construction(new_construction)
 
 
-def write_constructions_to_json_file(_file_path: Path, _constructions: dict[str, PhAdorbConstruction]) -> None:
+def write_constructions_to_json_file(
+    _file_path: Path, _constructions: dict[str, PhAdorbConstruction]
+) -> None:
     """Write all of the Construction-Types to a JSON file."""
     with open(_file_path, "w") as json_file:
-        json.dump([_.dict() for _ in _constructions.values()], json_file, indent=4)
+        json.dump(
+            [_.model_dump() for _ in _constructions.values()], json_file, indent=4
+        )
 
 
-def load_constructions_from_json_file(_file_path: Path) -> dict[str, PhAdorbConstruction]:
+def load_constructions_from_json_file(
+    _file_path: Path,
+) -> dict[str, PhAdorbConstruction]:
     """Load all of the Construction-Types from a JSON file."""
     with open(_file_path, "r") as json_file:
-        all_constructions = (PhAdorbConstruction(**item) for item in json.load(json_file))
+        all_constructions = (
+            PhAdorbConstruction(**item) for item in json.load(json_file)
+        )
         return {_.display_name: _ for _ in all_constructions}

@@ -36,7 +36,7 @@ class PhAdorbGridRegion(BaseModel):
 def write_CO2_factors_to_json_file(_file_path: Path, _grid_region: PhAdorbGridRegion):
     """Write the CO2 factors for the grid-region to a JSON file."""
     with open(_file_path, "w") as json_file:
-        json.dump(_grid_region.dict(), json_file, indent=4)
+        json.dump(_grid_region.model_dump(), json_file, indent=4)
 
 
 def load_CO2_factors_from_json_file(_file_path: Path) -> PhAdorbGridRegion:

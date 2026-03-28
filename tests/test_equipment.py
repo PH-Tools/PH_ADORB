@@ -59,16 +59,16 @@ def test_equipment_to_json():
         lifetime_years=10,
         labor_fraction=0.2,
     )
-    json_str = equip.json()
+    json_str = equip.model_dump_json()
     assert (
         json_str
-        == '{"name": "Test Equipment", "equipment_type": "Mechanical", "cost": 1000.0, "lifetime_years": 10, "labor_fraction": 0.2}'
+        == '{"name":"Test Equipment","equipment_type":"Mechanical","cost":1000.0,"lifetime_years":10,"labor_fraction":0.2}'
     )
 
 
 def test_equipment_from_json():
     json_str = '{"name": "Test Equipment", "equipment_type": "Mechanical", "cost": 1000.0, "lifetime_years": 10, "labor_fraction": 0.2}'
-    equip = PhAdorbEquipment.parse_raw(json_str)
+    equip = PhAdorbEquipment.model_validate_json(json_str)
     assert equip.name == "Test Equipment"
     assert equip.equipment_type == PhAdorbEquipmentType.MECHANICAL
     assert equip.cost == 1000.0
@@ -154,7 +154,9 @@ def test_equipment_json_file():
     )
 
     file_path = Path("test_equipment.json")
-    write_equipment_to_json_file(file_path, {_.name: _ for _ in [equip1, equip2, equip3]})
+    write_equipment_to_json_file(
+        file_path, {_.name: _ for _ in [equip1, equip2, equip3]}
+    )
 
     # -- Read the JSON file back in
     equipment = load_equipment_from_json_file(file_path)

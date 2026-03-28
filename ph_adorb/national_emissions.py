@@ -19,14 +19,20 @@ class PhAdorbNationalEmissions(BaseModel):
     kg_CO2_per_USD: float
 
 
-def write_national_emissions_to_json_file(_file_path: Path, _emissions: dict[str, PhAdorbNationalEmissions]) -> None:
+def write_national_emissions_to_json_file(
+    _file_path: Path, _emissions: dict[str, PhAdorbNationalEmissions]
+) -> None:
     """Write all of the National Emissions data to a JSON file."""
     with open(_file_path, "w") as json_file:
-        json.dump([_.dict() for _ in _emissions.values()], json_file, indent=4)
+        json.dump([_.model_dump() for _ in _emissions.values()], json_file, indent=4)
 
 
-def load_national_emissions_from_json_file(_file_path: Path) -> dict[str, PhAdorbNationalEmissions]:
+def load_national_emissions_from_json_file(
+    _file_path: Path,
+) -> dict[str, PhAdorbNationalEmissions]:
     """Load all of the National Emissions data from a JSON file."""
     with open(_file_path, "r") as json_file:
-        all_emissions = (PhAdorbNationalEmissions(**item) for item in json.load(json_file))
+        all_emissions = (
+            PhAdorbNationalEmissions(**item) for item in json.load(json_file)
+        )
         return {_.country_name: _ for _ in all_emissions}

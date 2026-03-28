@@ -20,7 +20,7 @@ def test_NationalEmissions():
     assert national_emissions.GDP_million_USD == 4.2
     assert national_emissions.CO2_MT == 2.3
     assert national_emissions.kg_CO2_per_USD == 0.5
-    assert national_emissions.dict() == {
+    assert national_emissions.model_dump() == {
         "country_name": "Germany",
         "us_trading_rank": 4,
         "GDP_million_USD": 4.2,
@@ -37,15 +37,15 @@ def test_NationalEmissions_to_json():
         CO2_MT=2.3,
         kg_CO2_per_USD=0.5,
     )
-    json_str = national_emissions.json()
+    json_str = national_emissions.model_dump_json()
     assert (
         json_str
-        == '{"country_name": "Germany", "us_trading_rank": 4, "GDP_million_USD": 4.2, "CO2_MT": 2.3, "kg_CO2_per_USD": 0.5}'
+        == '{"country_name":"Germany","us_trading_rank":4,"GDP_million_USD":4.2,"CO2_MT":2.3,"kg_CO2_per_USD":0.5}'
     )
 
 
 def test_NationalEmissions_from_json():
-    national_emissions = PhAdorbNationalEmissions.parse_obj(
+    national_emissions = PhAdorbNationalEmissions.model_validate(
         {
             "country_name": "Germany",
             "us_trading_rank": 4,
@@ -59,7 +59,7 @@ def test_NationalEmissions_from_json():
     assert national_emissions.GDP_million_USD == 4.2
     assert national_emissions.CO2_MT == 2.3
     assert national_emissions.kg_CO2_per_USD == 0.5
-    assert national_emissions.dict() == {
+    assert national_emissions.model_dump() == {
         "country_name": "Germany",
         "us_trading_rank": 4,
         "GDP_million_USD": 4.2,
