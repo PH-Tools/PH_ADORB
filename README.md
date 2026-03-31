@@ -66,4 +66,4 @@ For questions about PH-ADORB or any of the Passive House Tools, feel free to rea
 </details>
 
 
-![Tests](https://github.com/PH-Tools/ph_adorb/actions/workflows/ci.yaml/badge.svg)
+![Tests](https://github.com/PH-Tools/ph_adorb/actions/workflows/ci.yml/badge.svg)
