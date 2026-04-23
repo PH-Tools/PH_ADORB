@@ -14,7 +14,14 @@ KWH_PER_JOULE = 0.0000002778
 
 
 class DataFileSQL(BaseModel):
-    """A single EnergyPlus results .SQL Data File."""
+    """An EnergyPlus simulation results .SQL file reader.
+
+    Extracts energy consumption and peak demand data from the SQLite database
+    that EnergyPlus produces after a simulation run.
+
+    Attributes:
+        source_file_path (Path): Path to the EnergyPlus .sql results file.
+    """
 
     source_file_path: Path
 
@@ -47,7 +54,7 @@ class DataFileSQL(BaseModel):
         return peak_electric_watts_
 
     def get_hourly_purchased_electricity_kwh(self) -> list[float]:
-        """Get the 'Facility Total Building Electricity Demand Rate' [W] from the SQL File."""
+        """Get the hourly purchased electricity values (kWh) from the SQL file."""
         conn = sqlite3.connect(self.source_file_path)
         try:
             c = conn.cursor()
@@ -64,7 +71,7 @@ class DataFileSQL(BaseModel):
         return total_purchased_electricity_kwh_
 
     def get_total_purchased_electricity_kwh(self) -> float:
-        """Get the 'Facility Total Building Electricity Demand Rate' [W] from the SQL File."""
+        """Get the total annual purchased electricity (kWh) from the SQL file."""
         conn = sqlite3.connect(self.source_file_path)
         try:
             c = conn.cursor()
@@ -82,7 +89,7 @@ class DataFileSQL(BaseModel):
         return total_purchased_electricity_kwh_
 
     def get_total_sold_electricity_kwh(self) -> float:
-        """Get the 'Facility Total Building Electricity Demand Rate' [W] from the SQL File."""
+        """Get the total annual sold/surplus electricity (kWh) from the SQL file."""
         conn = sqlite3.connect(self.source_file_path)
         try:
             c = conn.cursor()
@@ -105,6 +112,7 @@ class DataFileSQL(BaseModel):
         return fuel_use_dict["Natural Gas"]
 
     def get_total_end_kwh_by_fuel_type(self) -> dict[str, float]:
+        """Return total end-use energy (kWh) grouped by fuel type from the SQL file."""
         # -- Get the data from the SQL file
         conn = sqlite3.connect(self.source_file_path)
         try:

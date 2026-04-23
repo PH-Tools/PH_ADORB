@@ -8,7 +8,13 @@ from dataclasses import dataclass
 
 @dataclass
 class YearlyCost:
-    """A single Yearly Cost for a building design."""
+    """A single cost entry assigned to a specific year of the analysis.
+
+    Attributes:
+        cost (float): The dollar cost for this year.
+        year (int): The year index (0-based) within the analysis duration.
+        description (str): Label identifying the source (e.g., construction or equipment name).
+    """
 
     cost: float
     year: int
@@ -20,7 +26,13 @@ class YearlyCost:
 
 @dataclass
 class YearlyKgCO2:
-    """A single Yearly CO2 Emissions for a building design"""
+    """A single embodied CO2 entry assigned to a specific year of the analysis.
+
+    Attributes:
+        kg_CO2 (float): The embodied CO2 in kilograms for this year.
+        year (int): The year index (0-based) within the analysis duration.
+        description (str): Label identifying the source (e.g., construction or equipment name).
+    """
 
     kg_CO2: float
     year: int
@@ -32,7 +44,12 @@ class YearlyKgCO2:
 
 @dataclass
 class YearlyPresentValueFactor:
-    """A single Yearly Present Value Factor for a building design."""
+    """A present value discount factor for a specific year of the analysis.
+
+    Attributes:
+        factor (float): The discount factor, computed as (1 + rate)^year.
+        year (int): The year number (1-based).
+    """
 
     factor: float
     year: int

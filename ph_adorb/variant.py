@@ -35,7 +35,29 @@ logger = logging.getLogger(__name__)
 
 
 class PhAdorbVariant(BaseModel):
-    """A single Variant of a building design."""
+    """A single variant of a building design with all data needed for ADORB cost calculation.
+
+    This is the top-level container that holds energy consumption data, fuel pricing,
+    grid CO2 factors, construction assemblies, equipment, CO2 measures, and analysis
+    parameters. Built from a Honeybee-REVIVE model via the from_HBJSON module.
+
+    Attributes:
+        name (str): Display name of the variant.
+        total_purchased_gas_kwh (float): Annual purchased gas consumption (kWh).
+        hourly_purchased_electricity_kwh (list[float]): 8760 hourly purchased electricity values (kWh).
+        total_sold_electricity_kwh (float): Annual sold-back electricity (kWh).
+        peak_electric_usage_W (float): Peak electrical demand (W).
+        electricity (PhAdorbFuel): Electricity fuel pricing data.
+        gas (PhAdorbFuel): Natural gas fuel pricing data.
+        grid_region (PhAdorbGridRegion): Regional hourly CO2 emission factors.
+        national_emissions (PhAdorbNationalEmissions): Country-level emissions intensity.
+        analysis_duration (int): Number of years for the ADORB analysis.
+        envelope_labor_cost_fraction (float): Default labor fraction for envelope constructions.
+        measure_collection (PhAdorbCO2MeasureCollection): CO2 reduction measures.
+        construction_collection (PhAdorbConstructionCollection): Envelope constructions.
+        equipment_collection (PhAdorbEquipmentCollection): Mechanical equipment and appliances.
+        price_of_carbon (float): Social cost of carbon ($/kgCO2). Default: 0.25.
+    """
 
     name: str
     total_purchased_gas_kwh: float
@@ -94,7 +116,22 @@ def calc_annual_total_electric_cost(
     _electric_sell_price_per_kwh: float,
     _electric_annual_base_price: float,
 ) -> float:
-    """Return the total annual electricity cost for the building."""
+    """Return the total annual electricity cost for the building.
+
+    Computed as: (purchased * purchase_price) - (sold * sale_price) + base_price.
+
+    Arguments:
+    ----------
+        * _purchased_electricity_kwh (float): Total annual purchased electricity (kWh).
+        * _sold_electricity_kwh (float): Total annual sold-back electricity (kWh).
+        * _electric_purchase_price_per_kwh (float): Purchase price ($/kWh).
+        * _electric_sell_price_per_kwh (float): Sale/net-metering price ($/kWh).
+        * _electric_annual_base_price (float): Fixed annual service charge ($).
+
+    Returns:
+    --------
+        * float: Net annual electricity cost ($).
+    """
     logger.info("calc_annual_total_electric_cost()")
 
     total_purchased_electric_cost = (
@@ -124,7 +161,20 @@ def calc_annual_total_electric_cost(
 def calc_annual_hourly_electric_CO2(
     _hourly_purchased_electricity_kwh: list[float], _grid_region: PhAdorbGridRegion
 ) -> list[float]:
-    """Return a list of total annual CO2 emissions for each year from 2023 - 2011 (89 years)."""
+    """Return a list of total annual CO2 emissions for each projected future year.
+
+    Multiplies hourly purchased electricity (converted to MWh) by each future year's
+    hourly grid CO2 factors, then sums across hours to get one annual total per year.
+
+    Arguments:
+    ----------
+        * _hourly_purchased_electricity_kwh (list[float]): 8760 hourly values (kWh).
+        * _grid_region (PhAdorbGridRegion): Grid region with hourly CO2 factors by year.
+
+    Returns:
+    --------
+        * list[float]: Total annual CO2 emissions for each projected future year.
+    """
     MWH_PER_KWH = 0.001
 
     # -- Convert the hourly purchased electricity from KWH to a pd.Series as MWH
@@ -145,7 +195,19 @@ def calc_annual_total_gas_cost(
     _gas_purchase_price_per_kwh: float,
     _gas_annual_base_price: float,
 ) -> float:
-    """Return the total annual gas cost for the building."""
+    """Return the total annual gas cost for the building.
+
+    Arguments:
+    ----------
+        * _total_purchased_gas_kwh (float): Annual gas consumption (kWh).
+        * _gas_used (bool): Whether gas is active. Returns 0.0 if False.
+        * _gas_purchase_price_per_kwh (float): Gas purchase price ($/kWh).
+        * _gas_annual_base_price (float): Fixed annual gas service charge ($).
+
+    Returns:
+    --------
+        * float: Total annual gas cost ($).
+    """
     logger.info("calc_annual_total_gas_cost()")
 
     if not _gas_used:
@@ -165,6 +227,20 @@ def calc_annual_total_gas_CO2(
     _total_purchased_gas_kwh: float,
     _gas_used: bool,
 ) -> float:
+    """Return the total annual CO2 emissions from natural gas combustion.
+
+    Converts gas consumption from kWh to therms, then applies a fixed emission
+    factor of 12.7 tons CO2 per therm.
+
+    Arguments:
+    ----------
+        * _total_purchased_gas_kwh (float): Annual gas consumption (kWh).
+        * _gas_used (bool): Whether gas is active. Returns 0.0 if False.
+
+    Returns:
+    --------
+        * float: Annual gas CO2 emissions (tons CO2).
+    """
     logger.info("calc_annual_total_gas_CO2()")
 
     TONS_CO2_PER_THERM_GAS = 12.7
@@ -190,7 +266,17 @@ def calc_CO2_reduction_measures_yearly_embodied_kgCO2(
     _variant_CO2_measures: PhAdorbCO2MeasureCollection,
     _kg_CO2_per_USD: float,
 ) -> list[YearlyKgCO2]:
-    """Return a list of all the Yearly-Embodied-kgCO2 for all the Variant's CO2-Reduction-Measures."""
+    """Return a list of all the yearly embodied kgCO2 for all the Variant's CO2 reduction measures.
+
+    Arguments:
+    ----------
+        * _variant_CO2_measures (PhAdorbCO2MeasureCollection): The CO2 measures.
+        * _kg_CO2_per_USD (float): National emissions intensity factor (kgCO2/$).
+
+    Returns:
+    --------
+        * list[YearlyKgCO2]: Embodied kgCO2 entries, one per measure.
+    """
 
     logger.info(
         f"calc_CO2_reduction_measures_yearly_embodied_kgCO2({len(_variant_CO2_measures)} measures)"
@@ -419,7 +505,22 @@ def calc_equipment_yearly_install_costs(
 def calc_variant_yearly_ADORB_costs(
     _variant: PhAdorbVariant, _output_tables_path: Path | None = None
 ) -> pd.DataFrame:
-    """Return a DataFrame with the Variant's yearly ADORB costs for each year of the analysis duration."""
+    """Return a DataFrame with the Variant's yearly ADORB costs for each year of the analysis duration.
+
+    This is the main orchestrator function. It computes energy costs/CO2, embodied costs/CO2,
+    and install costs for constructions, equipment, and CO2 measures, then passes everything
+    to calculate_annual_ADORB_costs() for present-value discounting.
+
+    Arguments:
+    ----------
+        * _variant (PhAdorbVariant): The building variant with all input data.
+        * _output_tables_path (Path | None): If provided, writes HTML preview tables
+            to this directory.
+
+    Returns:
+    --------
+        * pd.DataFrame: Yearly ADORB costs with five cost columns.
+    """
     logger.info("calc_variant_yearly_ADORB_costs()")
 
     # -----------------------------------------------------------------------------------

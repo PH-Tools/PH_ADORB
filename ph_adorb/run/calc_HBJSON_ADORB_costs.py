@@ -23,8 +23,8 @@ from ph_adorb.from_HBJSON import create_variant, read_HBJSON_file
 from ph_adorb.variant import calc_variant_yearly_ADORB_costs, calc_variant_cumulative_ADORB_costs
 
 
-# Function to setup logger to output to a log file
 def setup_logger(log_file_path: Path, _level: int = logging.INFO) -> logging.Logger:
+    """Configure file-based logging and return a logger for this module."""
     logging.basicConfig(
         filename=log_file_path, filemode="w", level=_level, format="%(asctime)s - %(levelname)s - %(message)s"
     )
@@ -32,8 +32,10 @@ def setup_logger(log_file_path: Path, _level: int = logging.INFO) -> logging.Log
 
 
 class InputFileError(Exception):
+    """Raised when a required input file (HBJSON or SQL) cannot be found."""
+
     def __init__(self, path) -> None:
-        self.msg = f"\nCannot find the specified HBJSON file:'{path}'"
+        self.msg = f"\nCannot find the specified input file:'{path}'"
         super().__init__(self.msg)
 
 

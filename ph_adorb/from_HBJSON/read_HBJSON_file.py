@@ -28,9 +28,11 @@ logger = logging.getLogger()
 
 
 class HBJSONModelReadError(Exception):
+    """Raised when an HBJSON file contains an object type other than 'Model'."""
+
     def __init__(self, _in) -> None:
         self.message = (
-            f"HBJSONModelReadError: Can only convert a Honeybee 'Model' to WUFI XML.\n"
+            f"HBJSONModelReadError: Can only convert a Honeybee 'Model' to an ADORB Variant.\n"
             f"Got a Honeybee object of type: {_in}."
         )
 

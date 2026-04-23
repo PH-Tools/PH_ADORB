@@ -228,15 +228,19 @@ def get_PhAdorbFuels_from_hb_model(_hb_model: Model) -> tuple[PhAdorbFuel, PhAdo
 
 
 def get_PhAdorbVariant_from_hb_model(_hb_model: Model, _results_sql_file_path: Path) -> PhAdorbVariant:
-    """Convert the HB-Model to a new ReviveVariant object.
+    """Convert a Honeybee-REVIVE Model and EnergyPlus SQL results into a PhAdorbVariant.
+
+    Extracts constructions, equipment, fuels, CO2 measures, grid region, and
+    national emissions from the HB model, and energy results from the SQL file.
 
     Arguments:
     ----------
-        * hb_model (HB_Model): The Honeybee Model to convert.
+        * _hb_model (Model): The Honeybee Model with REVIVE properties.
+        * _results_sql_file_path (Path): Path to the EnergyPlus .sql results file.
 
     Returns:
     --------
-        * ReviveVariant: The ReviveVariant object.
+        * PhAdorbVariant: The fully populated ADORB variant.
     """
 
     # -----------------------------------------------------------------------------------

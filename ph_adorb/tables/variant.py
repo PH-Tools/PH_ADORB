@@ -50,7 +50,7 @@ def rich_table_to_html(_tbl: Table) -> str:
 
 
 def add_total_row(tbl_: Table) -> None:
-    """Add a total row to the table if it contains numeric columns."""
+    """Add a bold total row to a Rich table, summing all numeric columns."""
     if tbl_.row_count == 0:
         return
 
@@ -72,6 +72,7 @@ def add_total_row(tbl_: Table) -> None:
 def preview_hourly_electric_and_CO2(
     _hourly_kwh: list[float], _hourly_CO2_factors: dict[int, list[float]], _output_path: Path | None
 ) -> None:
+    """Preview hourly electricity consumption and CO2 factors as a table."""
     # Create the table
     tbl_ = Table(title="Hourly Electric Consumption (kWh) and CO2 Factors (kgCO2/kWh)", show_lines=True)
     tbl_.add_column("Hour", style="cyan", justify="center", min_width=20, no_wrap=True)
@@ -101,6 +102,7 @@ def preview_hourly_electric_and_CO2(
 def preview_yearly_energy_and_CO2(
     _elec_kwh: float, _elec_CO2_by_future_year: list[float], _gas_kwh: float, _gas_CO2: float, _output_path: Path | None
 ) -> None:
+    """Preview annual energy consumption and CO2 emissions by future year as a table."""
     # Create the table
     tbl_ = Table(title="Future Annual Energy Consumption and CO2 Emissions", show_lines=True)
     tbl_.add_column("Year", style="cyan", justify="center", min_width=20, no_wrap=True)
@@ -150,6 +152,7 @@ def preview_yearly_energy_and_CO2(
 def preview_variant_co2_measures(
     _co2_measure_collection: PhAdorbCO2MeasureCollection, _output_path: Path | None
 ) -> None:
+    """Preview the variant's CO2 reduction measures as a table."""
     # Create the table
     tbl_ = Table(title="Variant CO2 Reduction Measures", show_lines=True)
     tbl_.add_column("Measure", style="cyan", justify="center", min_width=20, no_wrap=True)
@@ -219,6 +222,7 @@ def preview_variant_equipment(_equipment_collection: PhAdorbEquipmentCollection,
 def preview_variant_constructions(
     _construction_collection: PhAdorbConstructionCollection, _output_path: Path | None
 ) -> None:
+    """Preview the variant's construction assemblies as a table."""
     # Create the table
     tbl_ = Table(title="Variant Constructions", show_lines=True)
     tbl_.add_column("Construction", style="cyan", justify="center", min_width=20, no_wrap=True)
@@ -257,6 +261,7 @@ def preview_variant_constructions(
 
 
 def preview_yearly_install_costs(_input: list[YearlyCost], _output_path: Path | None) -> None:
+    """Preview yearly install costs grouped by description as a table."""
     # Group the data by description
     grouped_data = defaultdict(lambda: defaultdict(float))
     unique_years = set()
@@ -293,6 +298,7 @@ def preview_yearly_install_costs(_input: list[YearlyCost], _output_path: Path | 
 
 
 def preview_yearly_embodied_kgCO2(_input: list[YearlyKgCO2], _output_path: Path | None) -> None:
+    """Preview yearly embodied CO2 (kgCO2) grouped by description as a table."""
     # Group the data by description
     grouped_data = defaultdict(lambda: defaultdict(float))
     unique_years = set()
@@ -329,6 +335,7 @@ def preview_yearly_embodied_kgCO2(_input: list[YearlyKgCO2], _output_path: Path 
 
 
 def preview_yearly_embodied_CO2_costs(_input: list[YearlyCost], _output_path: Path | None) -> None:
+    """Preview yearly embodied CO2 costs (USD) grouped by description as a table."""
     # Group the data by description
     grouped_data = defaultdict(lambda: defaultdict(float))
     unique_years = set()

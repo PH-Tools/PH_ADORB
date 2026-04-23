@@ -10,7 +10,19 @@ from pydantic import BaseModel, PrivateAttr
 
 
 class PhAdorbConstruction(BaseModel):
-    """A single Construction."""
+    """A single building envelope construction assembly (wall, floor, roof, or window).
+
+    Holds per-unit-area cost and CO2 data, plus the total area for cost calculations.
+
+    Attributes:
+        display_name (str): Human-readable name of the construction.
+        identifier (str): Unique identifier matching the Honeybee construction.
+        CO2_kg_per_m2 (float): Embodied CO2 per square meter (kg CO2/m2).
+        cost_per_m2 (float): Installed cost per square meter ($/m2).
+        lifetime_years (int): Expected service life before replacement.
+        labor_fraction (float): Fraction of cost attributable to labor (0.0-1.0).
+        area_m2 (float): Total area of this construction in the building (m2). Default: 0.0.
+    """
 
     display_name: str
     identifier: str
@@ -23,9 +35,11 @@ class PhAdorbConstruction(BaseModel):
 
     @property
     def quantity_ft2(self) -> float:
+        """Total area converted to square feet."""
         return self.area_m2 * 10.7639
 
     def set_quantity_ft2(self, _value: float) -> None:
+        """Set the total area from a value in square feet."""
         self.area_m2 = _value / 10.7639
 
     @property
@@ -40,6 +54,7 @@ class PhAdorbConstruction(BaseModel):
 
     @property
     def material_fraction(self) -> float:
+        """Fraction of cost attributable to materials (1 - labor_fraction)."""
         return 1.0 - self.labor_fraction
 
     def duplicate(self) -> "PhAdorbConstruction":
@@ -57,17 +72,23 @@ class PhAdorbConstruction(BaseModel):
 
 
 class PhAdorbConstructionCollection(BaseModel):
-    """A collection of Constructions."""
+    """A dict-backed, iterable collection of construction assemblies.
+
+    Constructions are keyed by display_name and sorted alphabetically when iterated.
+    """
 
     _constructions: dict[str, PhAdorbConstruction] = PrivateAttr(default_factory=dict)
 
     def add_construction(self, _construction: PhAdorbConstruction) -> None:
+        """Add a construction to the collection."""
         self._constructions[_construction.display_name] = _construction
 
     def get_construction(self, key: str) -> PhAdorbConstruction:
+        """Return a construction by display name."""
         return self._constructions[key]
 
     def keys(self) -> list[str]:
+        """Return construction names sorted alphabetically."""
         return [
             k
             for k, v in sorted(
@@ -76,6 +97,7 @@ class PhAdorbConstructionCollection(BaseModel):
         ]
 
     def values(self) -> list[PhAdorbConstruction]:
+        """Return constructions sorted alphabetically by display name."""
         return list(sorted(self._constructions.values(), key=lambda x: x.display_name))
 
     def __iter__(self):

@@ -11,6 +11,17 @@ from pydantic import BaseModel, PrivateAttr
 
 
 class PhAdorbEquipmentType(str, Enum):
+    """Classification of building equipment types.
+
+    Values:
+        MECHANICAL: HVAC mechanical equipment (heat pumps, ERVs, etc.).
+        HOT_WATER: Domestic hot water equipment.
+        APPLIANCE: Plug-load appliances (refrigerators, stoves, etc.).
+        LIGHTS: Lighting systems.
+        PV_ARRAY: Photovoltaic solar panels.
+        BATTERY: Battery energy storage systems.
+    """
+
     MECHANICAL = "Mechanical"
     HOT_WATER = "Hot Water"
     APPLIANCE = "Appliance"
@@ -20,7 +31,15 @@ class PhAdorbEquipmentType(str, Enum):
 
 
 class PhAdorbEquipment(BaseModel):
-    """A single piece of Equipment."""
+    """A single piece of building equipment with cost and lifetime data.
+
+    Attributes:
+        name (str): Display name of the equipment.
+        equipment_type (PhAdorbEquipmentType): Equipment classification.
+        cost (float): Total installed cost in USD (labor + material).
+        lifetime_years (int): Expected service life before replacement.
+        labor_fraction (float): Fraction of cost attributable to labor (0.0-1.0).
+    """
 
     name: str
     equipment_type: PhAdorbEquipmentType
@@ -30,6 +49,7 @@ class PhAdorbEquipment(BaseModel):
 
     @property
     def material_fraction(self) -> float:
+        """Fraction of cost attributable to materials (1 - labor_fraction)."""
         return 1.0 - self.labor_fraction
 
     def duplicate(self) -> "PhAdorbEquipment":
@@ -46,20 +66,27 @@ class PhAdorbEquipment(BaseModel):
 
 
 class PhAdorbEquipmentCollection(BaseModel):
-    """A collection of Equipment."""
+    """A dict-backed, iterable collection of equipment items.
+
+    Equipment is keyed by name and sorted alphabetically when iterated.
+    """
 
     _equipment: dict[str, PhAdorbEquipment] = PrivateAttr(default_factory=dict)
 
     def add_equipment(self, _ph_adorb_equipment: PhAdorbEquipment) -> None:
+        """Add an equipment item to the collection."""
         self._equipment[_ph_adorb_equipment.name] = _ph_adorb_equipment
 
     def get_equipment(self, key: str) -> PhAdorbEquipment:
+        """Return an equipment item by name."""
         return self._equipment[key]
 
     def keys(self) -> list[str]:
+        """Return equipment names sorted alphabetically."""
         return [k for k, v in sorted(self._equipment.items(), key=lambda x: x[1].name)]
 
     def values(self) -> list[PhAdorbEquipment]:
+        """Return equipment items sorted alphabetically by name."""
         return list(sorted(self._equipment.values(), key=lambda x: x.name))
 
     def __iter__(self):

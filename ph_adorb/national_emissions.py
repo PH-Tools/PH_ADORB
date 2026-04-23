@@ -10,7 +10,18 @@ from pydantic import BaseModel
 
 
 class PhAdorbNationalEmissions(BaseModel):
-    """National Emissions Data."""
+    """Country-level CO2 emissions intensity per US dollar of economic output.
+
+    Used to convert material dollar costs into embodied kgCO2 via an economic
+    input-output proxy for lifecycle assessment.
+
+    Attributes:
+        country_name (str): Country name (e.g., "United States").
+        us_trading_rank (int): Rank among US trading partners.
+        GDP_million_USD (float): Gross domestic product in millions of USD.
+        CO2_MT (float): Total national CO2 emissions in megatonnes.
+        kg_CO2_per_USD (float): Emissions intensity factor (kg CO2 per USD of GDP).
+    """
 
     country_name: str
     us_trading_rank: int

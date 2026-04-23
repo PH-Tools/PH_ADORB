@@ -30,7 +30,17 @@ USA_TRANSITION_COST_FACTOR = USA_NATIONAL_TRANSITION_COST / (NAMEPLATE_CAPACITY_
 
 
 def present_value_factor(_year: int, _discount_rate: float) -> YearlyPresentValueFactor:
-    """Calculate the present value factor for a given year."""
+    """Calculate the present value discount factor for a given year.
+
+    Arguments:
+    ----------
+        * _year (int): The 0-based year index.
+        * _discount_rate (float): The annual discount rate (e.g., 0.02 for 2%).
+
+    Returns:
+    --------
+        * YearlyPresentValueFactor: The discount factor and 1-based year number.
+    """
     rate = (1 + _discount_rate) ** (_year + 1)
     return YearlyPresentValueFactor(rate, _year + 1)
 
@@ -38,7 +48,18 @@ def present_value_factor(_year: int, _discount_rate: float) -> YearlyPresentValu
 def energy_purchase_cost_PV(
     _pv_factor: YearlyPresentValueFactor, _annual_cost_electric: float, _annual_cost_gas: float
 ) -> float:
-    """Calculate the total direct energy cost for a given year."""
+    """Calculate the present-value direct energy purchase cost for a given year.
+
+    Arguments:
+    ----------
+        * _pv_factor (YearlyPresentValueFactor): The discount factor for this year.
+        * _annual_cost_electric (float): Total annual electricity cost ($).
+        * _annual_cost_gas (float): Total annual gas cost ($).
+
+    Returns:
+    --------
+        * float: The present-value energy cost ($).
+    """
     logger.info(f"energy_purchase_cost_PV(year={_pv_factor.year}, factor={_pv_factor.factor :.3f})")
 
     if _pv_factor.factor == 0:
@@ -63,7 +84,20 @@ def energy_CO2_cost_PV(
     _annual_CO2_gas: float,
     _price_of_carbon: float,
 ) -> float:
-    """Calculate the total operational carbon cost for a given year."""
+    """Calculate the present-value operational CO2 cost for a given year.
+
+    Arguments:
+    ----------
+        * _pv_factor (YearlyPresentValueFactor): The discount factor for this year.
+        * _future_annual_CO2_electric (list[float]): Annual electric CO2 emissions for
+            each future year (kg CO2).
+        * _annual_CO2_gas (float): Annual gas CO2 emissions (kg CO2), constant across years.
+        * _price_of_carbon (float): Social cost of carbon ($/kgCO2).
+
+    Returns:
+    --------
+        * float: The present-value operational CO2 cost ($).
+    """
     logger.info(f"energy_CO2_cost_PV(year={_pv_factor.year}, factor={_pv_factor.factor :.3f})")
 
     if _pv_factor.factor == 0:
@@ -90,7 +124,18 @@ def energy_CO2_cost_PV(
 def measure_purchase_cost_PV(
     _pv_factor: YearlyPresentValueFactor, _carbon_measure_yearly_purchase_costs: list[YearlyCost]
 ) -> float:
-    """Calculate the total Measure purchase, install and maintenance cost for a single year."""
+    """Calculate the present-value measure install cost for a single year.
+
+    Arguments:
+    ----------
+        * _pv_factor (YearlyPresentValueFactor): The discount factor for this year.
+        * _carbon_measure_yearly_purchase_costs (list[YearlyCost]): All yearly install
+            costs across constructions, equipment, and CO2 measures.
+
+    Returns:
+    --------
+        * float: The present-value install/replacement cost ($) for this year.
+    """
     logger.info(f"measure_purchase_cost_PV(year={_pv_factor.year}, factor={_pv_factor.factor :.3f})")
 
     if _pv_factor == 0:
@@ -116,7 +161,18 @@ def measure_purchase_cost_PV(
 def measure_CO2_cost_PV(
     _pv_factor: YearlyPresentValueFactor, _carbon_measure_embodied_CO2_yearly_costs: list[YearlyCost]
 ) -> float:
-    """Calculate the total Measure embodied CO2 cost for a given year."""
+    """Calculate the present-value embodied CO2 cost for a given year.
+
+    Arguments:
+    ----------
+        * _pv_factor (YearlyPresentValueFactor): The discount factor for this year.
+        * _carbon_measure_embodied_CO2_yearly_costs (list[YearlyCost]): All yearly
+            embodied CO2 costs across constructions, equipment, and CO2 measures.
+
+    Returns:
+    --------
+        * float: The present-value embodied CO2 cost ($) for this year.
+    """
     logger.info(f"measure_CO2_cost_PV(year={_pv_factor.year}, factor={_pv_factor.factor :.3f})")
 
     # TODO: What is this factor for? Why do we multiply by it?
@@ -146,7 +202,21 @@ def measure_CO2_cost_PV(
 
 
 def grid_transition_cost_PV(_pv_factor: YearlyPresentValueFactor, _peak_electrical_W: float) -> float:
-    """Calculate the total grid transition cost for a given year."""
+    """Calculate the present-value grid transition cost for a given year.
+
+    The building's peak electrical demand is multiplied by the annual per-Watt
+    transition cost (derived from the USA national transition cost spread over
+    30 years). After year 30, the transition cost is zero.
+
+    Arguments:
+    ----------
+        * _pv_factor (YearlyPresentValueFactor): The discount factor for this year.
+        * _peak_electrical_W (float): The building's peak electrical demand (W).
+
+    Returns:
+    --------
+        * float: The present-value grid transition cost ($) for this year.
+    """
     logger.info(f"grid_transition_PV_cost(year={_pv_factor.year}, factor={_pv_factor.factor :.3f})")
 
     if _pv_factor.year > USA_NUM_YEARS_TO_TRANSITION:
@@ -182,7 +252,25 @@ def calculate_annual_ADORB_costs(
     _peak_electrical_W: float,
     _price_of_carbon: float,
 ) -> pd.DataFrame:
-    """Returns a DataFrame with the yearly costs from the ADORB analysis."""
+    """Calculate all five ADORB cost components for each year and return as a DataFrame.
+
+    Arguments:
+    ----------
+        * _analysis_duration_years (int): Number of years to analyze.
+        * _annual_total_cost_electric (float): Annual electricity cost ($).
+        * _annual_total_cost_gas (float): Annual gas cost ($).
+        * _annual_hourly_CO2_electric (list[float]): Annual electric CO2 by future year.
+        * _annual_total_CO2_gas (float): Annual gas CO2 (kg CO2).
+        * _all_yearly_install_costs (list[YearlyCost]): All install/replacement costs by year.
+        * _all_yearly_embodied_kgCO2 (list[YearlyCost]): All embodied CO2 costs by year.
+        * _peak_electrical_W (float): Peak electrical demand (W).
+        * _price_of_carbon (float): Social cost of carbon ($/kgCO2).
+
+    Returns:
+    --------
+        * pd.DataFrame: One row per year with columns: pv_direct_energy,
+            pv_operational_CO2, pv_direct_MR, pv_embodied_CO2, pv_e_trans.
+    """
 
     # --  Define the column names
     columns = [

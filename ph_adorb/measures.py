@@ -11,12 +11,29 @@ from pydantic import BaseModel, PrivateAttr
 
 
 class CO2MeasureType(str, Enum):
+    """Classification of CO2 reduction measures.
+
+    Values:
+        PERFORMANCE: Measures that improve building energy performance (e.g., insulation upgrades).
+        NON_PERFORMANCE: Measures that reduce carbon without affecting energy use (e.g., low-carbon materials).
+    """
+
     PERFORMANCE = "PERFORMANCE"
     NON_PERFORMANCE = "NON_PERFORMANCE"
 
 
 class PhAdorbCO2ReductionMeasure(BaseModel):
-    """A CO2 Reduction Measure."""
+    """A single CO2 reduction measure with cost and carbon data.
+
+    Attributes:
+        measure_type (CO2MeasureType): Performance or non-performance classification.
+        name (str): Display name of the measure.
+        year (int): Year index (0-based) when the measure is applied.
+        cost (float): Total installed cost in USD (labor + material).
+        kg_CO2 (Optional[float]): Direct CO2 reduction in kg, if known.
+        country_name (str): Country of manufacture for embodied carbon calculation.
+        labor_fraction (float): Fraction of cost attributable to labor (0.0-1.0).
+    """
 
     measure_type: CO2MeasureType
     name: str
@@ -28,24 +45,32 @@ class PhAdorbCO2ReductionMeasure(BaseModel):
 
     @property
     def material_fraction(self) -> float:
+        """Fraction of cost attributable to materials (1 - labor_fraction)."""
         return 1.0 - self.labor_fraction
 
 
 class PhAdorbCO2MeasureCollection(BaseModel):
-    """A collection of CO2 Reduction Measures."""
+    """A dict-backed, iterable collection of CO2 reduction measures.
+
+    Measures are keyed by name and sorted by year when iterated.
+    """
 
     _measures: dict[str, PhAdorbCO2ReductionMeasure] = PrivateAttr(default_factory=dict)
 
     def add_measure(self, factor: PhAdorbCO2ReductionMeasure) -> None:
+        """Add a CO2 reduction measure to the collection."""
         self._measures[factor.name] = factor
 
     def get_measure(self, key: str) -> PhAdorbCO2ReductionMeasure:
+        """Return a measure by name."""
         return self._measures[key]
 
     def keys(self) -> list[str]:
+        """Return measure names sorted by year."""
         return [k for k, v in sorted(self._measures.items(), key=lambda x: x[1].year)]
 
     def values(self) -> list[PhAdorbCO2ReductionMeasure]:
+        """Return measures sorted by year."""
         return list(sorted(self._measures.values(), key=lambda x: x.year))
 
     def __iter__(self):

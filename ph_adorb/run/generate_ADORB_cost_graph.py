@@ -19,8 +19,10 @@ import plotly.io as pio
 
 
 class InputFileError(Exception):
+    """Raised when the input CSV file cannot be found."""
+
     def __init__(self, path) -> None:
-        self.msg = f"\nCannot find the specified HBJSON file:'{path}'"
+        self.msg = f"\nCannot find the specified CSV file:'{path}'"
         super().__init__(self.msg)
 
 

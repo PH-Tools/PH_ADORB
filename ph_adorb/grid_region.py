@@ -11,7 +11,19 @@ from pydantic import BaseModel, Field
 
 
 class PhAdorbGridRegion(BaseModel):
-    """Regional CO2 Emissions Factors for single Electricity Grid Region."""
+    """Regional CO2 emissions factors for a single electricity grid region.
+
+    Holds hourly CO2 emission rates (kg CO2/MWh) for each projected future year,
+    sourced from NREL Cambium data. Used to convert hourly purchased electricity
+    into annual operational CO2 emissions.
+
+    Attributes:
+        region_code (str): NREL Cambium region code (e.g., "RFCWc").
+        region_name (str): Human-readable region name.
+        description (str): Description of the grid region.
+        hourly_CO2_factors (dict[int, list[float]]): Mapping of year -> 8760 hourly
+            CO2 factors (kg CO2/MWh). Keys are integer years (2023-2111).
+    """
 
     region_code: str
     region_name: str
