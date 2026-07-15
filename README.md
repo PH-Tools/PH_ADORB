@@ -32,6 +32,9 @@ This package is [hosted on PyPi](https://pypi.org/project/PH-ADORB/). To install
 <details>
 <summary><strong>Development</strong></summary>
 
+### Development [Orientation]:
+For contributor/agent orientation, see [`CLAUDE.md`](CLAUDE.md) and the [`context/`](context/) folder. PH-ADORB is a **CPython** numeric library (pandas/plotly) — it is not IronPython and is called from Grasshopper via subprocess. Correctness is anchored to the Phius reference method in [`_reference/`](_reference/).
+
 ### Development [Local]:
 PH-ADORB is free and open-source. We welcome any and all thoughts, opinions, and contributions! To get setup for local development:
 1. **Fork** this GitHub repository to your own GitHub account.
