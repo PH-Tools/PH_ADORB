@@ -40,6 +40,11 @@ dev = ["black", "isort", "pytest", "coverage"]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
+# -- Ship only the package (and any future subpackages). Without an include pattern,
+# -- top-level folders like context/, planning/ and docs/ break flat-layout auto-discovery.
+[tool.setuptools.packages.find]
+include = ["ph_adorb*"]
+
 [project.urls]
 homepage = "https://www.passivehousetools.com/"
 repository = "https://github.com/PH-Tools/PH_ADORB/tree/main"
